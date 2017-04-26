@@ -1,0 +1,62 @@
+{
+  "name": "Robomanager",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "Addon for import taobao information",
+  "author": "Alexey Moshkin",
+  "icons": {
+    "16": "images/icon.png",
+    "128": "images/icon.png"
+  },
+  "default_locale": "ru",
+  "background": {
+    "page": "background.html"
+  },
+  "applications": {
+    "gecko": {
+      "id": "robomanager@alibaba24.ru"
+    }
+  },
+  "browser_action": {
+    "default_icon": {
+      "19": "images/icon.png",
+      "38": "images/icon.png"
+    },
+    "default_title": "brobo"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.ap.yarlan.ru/order_item*"
+      ],
+      "js": [
+        "scripts/vendor/jquery.js",
+        "scripts/yarlan.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://buyertrade.taobao.com/trade/itemlist/*"
+      ],
+      "js": [
+        "scripts/vendor/jquery.js",
+        "scripts/buyertrade.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    "scripts/yarlan.js",
+    "scripts/buyertrade.js"
+  ],
+  "permissions": [
+    "cookies",
+    "tabs",
+    "notifications",
+    "contextMenus",
+    "*://*.buyertrade.taobao.com/trade/itemlist/*",
+    "*://*.taobao.com/*",
+    "*://*.ap.yarlan.ru/*"
+  ]
+}

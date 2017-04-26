@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "Корзина Alibaba24",
+    "description": "Название приложения"
+  },
+  "appDescription": {
+    "message": "Корзина для покупок клиентов Alibaba24.ru на сайтах taobao.com и tmall.com",
+    "description": "Описание приложения"
+  }
+}
