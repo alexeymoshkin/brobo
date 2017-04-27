@@ -62,7 +62,6 @@ function getSendOrderData( task ) {
         error: 'Не удалось получить данные'
       });
     } else {
-      console.log( 'RESPONSE', this );
       sendMessageToBg( this.responseText, task );
     }
   };

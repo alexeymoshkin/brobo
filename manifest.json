@@ -1,6 +1,6 @@
 {
   "name": "Robomanager",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "manifest_version": 2,
   "description": "Addon for import taobao information",
   "author": "Alexey Moshkin",
@@ -10,7 +10,10 @@
   },
   "default_locale": "ru",
   "background": {
-    "page": "background.html"
+    "scripts": [
+      "scripts/background.js",
+      "scripts/vendor/jquery-3.2.1.min.js"
+    ]
   },
   "applications": {
     "gecko": {
@@ -30,7 +33,7 @@
         "*://*.ap.yarlan.ru/order_item*"
       ],
       "js": [
-        "scripts/vendor/jquery.js",
+        "scripts/vendor/jquery-3.2.1.min.js",
         "scripts/yarlan.js"
       ],
       "run_at": "document_start"
@@ -40,7 +43,7 @@
         "*://buyertrade.taobao.com/trade/itemlist/*"
       ],
       "js": [
-        "scripts/vendor/jquery.js",
+        "scripts/vendor/jquery-3.2.1.min.js",
         "scripts/buyertrade.js"
       ],
       "run_at": "document_start"
@@ -55,7 +58,6 @@
     "tabs",
     "notifications",
     "contextMenus",
-    "*://*.buyertrade.taobao.com/trade/itemlist/*",
     "*://*.taobao.com/*",
     "*://*.ap.yarlan.ru/*"
   ]

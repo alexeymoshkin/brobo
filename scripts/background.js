@@ -5,7 +5,6 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/order_item.php*",
     Port;
 
-
 function takeSendDataApi( task, body, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
@@ -50,7 +49,6 @@ function checkManager( login ) {
   var d = $.Deferred();
 
   chrome.cookies.get( { url: 'https://www.taobao.com', name: '_nk_' }, function( obj ){
-    console.log( 'cookie obj', obj );
     if ( obj === null || obj.value !== login ) {
       chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
         chrome.tabs.sendMessage( tabs[0].id, {
@@ -104,8 +102,6 @@ function handleYarlanMsg( msg ) {
 
 function handleTaobaoMsg( msg ) {
   if ( msg.error ) {
-    console.log( 'msg ERROR', msg );
-
     chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
       chrome.tabs.sendMessage( tabs[0].id, msg );
     });
