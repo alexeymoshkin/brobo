@@ -1,0 +1,25 @@
+{
+  "name": "brobo",
+  "version": "1.0.3",
+  "description": "Extension for ap.yarlan.ru taobao.com interaction",
+  "main": "manifest.json",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexeymoshkin/brobo.git"
+  },
+  "author": "Alexey Moshkin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexeymoshkin/brobo/issues"
+  },
+  "homepage": "https://github.com/alexeymoshkin/brobo#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-bump": "^2.7.0",
+    "gulp-zip": "^4.0.0",
+    "jsonfile": "^3.0.0"
+  }
+}

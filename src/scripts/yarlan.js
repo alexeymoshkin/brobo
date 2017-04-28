@@ -45,7 +45,7 @@ $( document ).ready( function() {
   function sendTask( button ) {
     var tbOrderId = prompt('Введите номер заказа Taobao').replace( /\s+/g, '' );
 
-    if ( !tbOrderId.match( /^\d{16}$/g ) ) {
+    if ( !tbOrderId.match( /^\d{16,}$/g ) ) {
       alert( 'Номер заказа Taobao введен не верно, попробуйте еще раз' );
       return;
     }
