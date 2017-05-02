@@ -13,13 +13,22 @@ module.exports = function(grunt){
     bump: {
       options: {
         files: ['src/manifest.json'],
+        createTag: false,
         commit: false,
         push: false
       }
     },
 
-    zip:{
-      'dist/brobo'
+    compress: {
+      options: {
+        mode: 'zip',
+        archive: 'dist/brobo.zip'
+      },
+      files: {
+        expand: true,
+        cwd: 'src/',
+        src: ['**/*']
+      }
     }
 
   });

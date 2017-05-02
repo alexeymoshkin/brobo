@@ -1,5 +1,9 @@
 'use strict';
 
+var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
+    port,
+    formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15';
+
 // Test
 function testRequest() {
   var task1 = {
@@ -24,19 +28,23 @@ function testRequest() {
   getSendTrack( taskTrack );
   // getSendOrderData( task1 );
 }
-// test
 
 testRequest();
 
-var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
-    port,
-    formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15';
+// test
 
 $( document ).ready( function() {
   port = chrome.runtime.connect( {name: 'taobao'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
-    getSendOrderData( msg );
+    switch ( msg.taskName ){
+    case 'getOrderInfo':
+      getSendOrderData( msg );
+      break;
+    case 'getTrack':
+      getSendTrack( msg );
+      break;
+    }
   });
 });
 
