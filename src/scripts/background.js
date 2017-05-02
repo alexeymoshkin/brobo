@@ -5,23 +5,28 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/order_item.php*",
     Port;
 
-function takeSendDataApi( task, body, action ) {
+function takeSendDataApi( msg, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
-      sendUrl = apiUrl + '?action=' + action + '&manager_login=' + task.managerLogin + '&order_id=' + task.taobaoOrderId + '&store_id=' + task.storeId + '&delivery=' + task.delivery;
+      trackParam = msg.track ? `&track=${msg.track}` : '',
+      deliveryParam = msg.delivery ? `&delivery=${task.delivery}` : '',
+      task = msg.task,
+      sendUrl =  `${apiUrl}?action=${action}&manager_login=${task.managerLogin}&order_id=${task.taobaoOrderId}&store_id=${task.storeId}${trackParam}${deliveryParam}`;
 
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );
   xhr.setRequestHeader( "X-Requested-With", "XMLHttpRequest" );
 
-  xhr.send( JSON.stringify( body ) );
+  xhr.send( JSON.stringify( msg.orderData ||
+                            msg.orderItemsData ||
+                            msg.trackingData ));
 
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
 
     if ( this.status != 200 ) {
       d.reject();
-      return;
+      return d;
     }
     d.resolve();
   }
@@ -109,16 +114,17 @@ function handleTaobaoMsg( msg ) {
   }
 
   $.when(
-    takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
-    takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' )
-  ).done( function() {
-    delete msg.orderData;
-    delete msg.orderItemsData;
-    delete msg.from;
+    takeSendDataApi( msg.task, 'sendOrderData' ),
+    takeSendDataApi( msg.task, 'sendOrderItemsData' )
 
+  ).always( function() {
+    msg = cleanMsg( msg );
+
+  }).done( function() {
     chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
       chrome.tabs.sendMessage( tabs[0].id, msg );
     });
+
   }).fail( function() {
     msg.error = 'Не удалось отправить данные на сервер';
 
@@ -128,12 +134,34 @@ function handleTaobaoMsg( msg ) {
   });
 }
 
+function cleanMsg( msg ){
+  delete msg.orderData;
+  delete msg.orderItemsData;
+  delete msg.from;
+  return msg;
+}
+
+function handleMsgTask( msg ){
+  switch( msg.task.taskName ) {
+  case 'getOrderInfo':
+    d1 = takeSendDataApi( msg.task, 'sendOrderData' ),
+    d2 = 12
+    return , takeSendDataApi( msg.task, 'sendOrderItemsData' )
+
+    break;
+
+  case 'getTrack':
+    return
+    break;
+  }
+}
+
 
 chrome.runtime.onConnect.addListener( function( port ){
   Port = port;
 
   port.onMessage.addListener( function ( msg ){
-    switch ( msg.from ) {
+    switch( msg.from ) {
     case 'yarlan':
       handleYarlanMsg( msg );
       break;

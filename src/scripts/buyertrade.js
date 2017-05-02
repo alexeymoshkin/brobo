@@ -90,18 +90,12 @@ function getSendTrack( task ) {
   $.ajax({
     url: trackUrl,
     success: data => {
-      let track = data.expressId;
-
-      console.log( track, data, 'track data');
-
       port.postMessage({
         task: task,
-        track: track
+        track: data.expressId
       });
     },
     error: err => {
-      console.log( err, 'ERR');
-
       port.postMessage({
         task: task,
         error: err
