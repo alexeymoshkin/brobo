@@ -5,21 +5,18 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/order_item.php*",
     Port;
 
-function takeSendDataApi( msg, action ) {
+function takeSendDataApi( task, data, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
-      trackParam = msg.track ? `&track=${msg.track}` : '',
-      deliveryParam = msg.delivery ? `&delivery=${task.delivery}` : '',
-      task = msg.task,
+      trackParam = task.track ? `&track=${task.track}` : '',
+      deliveryParam = task.delivery ? `&delivery=${task.delivery}` : '',
       sendUrl =  `${apiUrl}?action=${action}&manager_login=${task.managerLogin}&order_id=${task.taobaoOrderId}&store_id=${task.storeId}${trackParam}${deliveryParam}`;
 
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );
   xhr.setRequestHeader( "X-Requested-With", "XMLHttpRequest" );
 
-  xhr.send( JSON.stringify( msg.orderData ||
-                            msg.orderItemsData ||
-                            msg.trackingData ));
+  xhr.send( JSON.stringify( data ));
 
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
@@ -114,8 +111,7 @@ function handleTaobaoMsg( msg ) {
   }
 
   $.when(
-    takeSendDataApi( msg.task, 'sendOrderData' ),
-    takeSendDataApi( msg.task, 'sendOrderItemsData' )
+    handleMsgTask( msg )
 
   ).always( function() {
     msg = cleanMsg( msg );
@@ -144,14 +140,13 @@ function cleanMsg( msg ){
 function handleMsgTask( msg ){
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
-    d1 = takeSendDataApi( msg.task, 'sendOrderData' ),
-    d2 = 12
-    return , takeSendDataApi( msg.task, 'sendOrderItemsData' )
-
+    var d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
+        d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
+    return d1, d2;
     break;
 
   case 'getTrack':
-    return
+    return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
     break;
   }
 }

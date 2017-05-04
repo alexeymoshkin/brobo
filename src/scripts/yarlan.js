@@ -27,9 +27,9 @@ $( document ).ready( function() {
   // MAIN FUNCTION
   var findButtonsSetOnclick = setInterval( function () {
     var importButtons = $( 'span.import_from_taobao' ),
-        trackButtons = $( 'span.import_track' );
+        trackButtons = $( 'span.import_taobao_track' );
 
-    if ( importButtons.length ) { //&& trackButtons.length
+    if ( importButtons.length && trackButtons.length ) {
       clearInterval( findButtonsSetOnclick );
       createOnclickAction( importButtons, 'getOrderInfo' );
       createOnclickAction( trackButtons, 'getTrack' );
@@ -45,20 +45,21 @@ $( document ).ready( function() {
   }
 
   function sendTask( button, task ) {
-    var tbOrderId = prompt('Введите номер заказа Taobao').replace( /\s+/g, '' );
+    var maybeOrderId = $( button ).attr( 'data-taobao_order_id' ),
+        tbOrderId = maybeOrderId || prompt('Введите номер заказа Taobao').replace( /\s+/g, '' ),
+        msg = {
+          storeId: $( button ).attr( 'data-store_id' ),
+          managerLogin: $( button ).attr( 'data-manager_login' ),
+          taskName: task,
+          from: 'yarlan'
+        };
 
     if ( !tbOrderId.match( /^\d{16,}$/g ) ) {
       alert( 'Номер заказа Taobao введен не верно, попробуйте еще раз' );
       return;
     }
 
-    var msg = {
-      taobaoOrderId: tbOrderId,
-      storeId: $( button ).attr( 'data-store_id' ),
-      managerLogin: $( button ).attr( 'data-manager_login' ),
-      taskName: task,
-      from: 'yarlan'
-    };
+    msg.taobaoOrderId = tbOrderId;
     port.postMessage( msg );
   }
 });

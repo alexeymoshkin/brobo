@@ -4,36 +4,8 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     port,
     formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15';
 
-// Test
-function testRequest() {
-  var task1 = {
-    taobaoOrderId: '3254842308974967',
-    storeId: '62',
-    managerLogin: 'krasrab5',
-    taskName: 'getOrderInfo'
-  },
-      task2 = {
-        taobaoOrderId: '9287608309696895',
-        storeId: '62',
-        managerLogin: 'krasrab',
-        taskName: 'getOrderInfo'
-      },
-      taskTrack = {
-        taobaoOrderId: '11508210996654967',
-        storeId: '53',
-        managerLogin: 'krasrab5',
-        taskName: 'getTrack'
-      };
-
-  getSendTrack( taskTrack );
-  // getSendOrderData( task1 );
-}
-
-testRequest();
-
-// test
-
 $( document ).ready( function() {
+  window.stop();  // stop long loading taobao page
   port = chrome.runtime.connect( {name: 'taobao'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
@@ -76,6 +48,7 @@ function getSendOrderData( task ) {
     if ( this.status != 200 ) {
       port.postMessage({
         task: task,
+        from: 'taobao',
         error: 'Не удалось получить данные'
       });
     } else {
@@ -85,21 +58,21 @@ function getSendOrderData( task ) {
 }
 
 function getSendTrack( task ) {
-  var trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId;
+  var trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
+      msg = {
+        task: task,
+        from: 'taobao'
+      };
 
   $.ajax({
     url: trackUrl,
     success: data => {
-      port.postMessage({
-        task: task,
-        track: data.expressId
-      });
+      msg.task.track = data.expressId;
+      port.postMessage( msg );
     },
     error: err => {
-      port.postMessage({
-        task: task,
-        error: err
-      });
+      msg.error = err;
+      port.postMessage( msg );
     }
   });
 }
@@ -151,3 +124,33 @@ function createOrderItemsObj( jsonStr ) {
 
   return obj;
 }
+
+
+// Test
+function testRequest() {
+  var task1 = {
+    taobaoOrderId: '3254842308974967',
+    storeId: '62',
+    managerLogin: 'krasrab5',
+    taskName: 'getOrderInfo'
+  },
+      task2 = {
+        taobaoOrderId: '9287608309696895',
+        storeId: '62',
+        managerLogin: 'krasrab',
+        taskName: 'getOrderInfo'
+      },
+      taskTrack = {
+        taobaoOrderId: '11508210996654967',
+        storeId: '53',
+        managerLogin: 'krasrab5',
+        taskName: 'getTrack'
+      };
+
+  getSendTrack( taskTrack );
+  // getSendOrderData( task1 );
+}
+
+// testRequest();
+
+// test
