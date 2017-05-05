@@ -24,33 +24,69 @@ $( document ).ready( function() {
     }
   });
 
-  // MAIN FUNCTION
-  var findButtonsSetOnclick = setInterval( function () {
-    var importButtons = $( 'span.import_from_taobao' ),
+  // MAIN FUNCTIONS
+  var findTrackButtonSetOnclick = setInterval( function() {
+    let button = $( 'a#import_all_tb_tracks' );
+
+    if( button ) {
+      clearInterval( findTrackButtonSetOnclick );
+      createOnclickRequest( button );
+    }
+  }, 100);
+
+  var findButtonsSetOnclick = setInterval( function() {
+    let importButtons = $( 'span.import_from_taobao' ),
         trackButtons = $( 'span.import_taobao_track' );
 
-    if ( importButtons.length && trackButtons.length ) {
+    if( importButtons.length && trackButtons.length ) {
       clearInterval( findButtonsSetOnclick );
       createOnclickAction( importButtons, 'getOrderInfo' );
       createOnclickAction( trackButtons, 'getTrack' );
     }
-  }, 500 );
+  }, 250 ); //500
 
-  function createOnclickAction( buttons, task ) {
+  function createOnclickAction( buttons, taskName ) {
     $( buttons ).each( function( i ) {
       $( this ).click( function() {
-        sendTask( this, task );
+        sendTask( this, taskName );
       });
     });
   }
 
-  function sendTask( button, task ) {
+  function createOnclickRequest( button ) {
+    let manager = $( button ).attr( 'data-manager_login' ),
+        url = `http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackImport&manager_login=${manager}`,
+        msg;
+
+    $( button ).click( function() {
+      $.ajax({
+        url: url,
+        success: data => {
+          if( data.ordersIds.length ) {
+            msg.managerLogin = manager;
+            msg.taskName = 'getAllTracks';
+            msg.from = 'yarlan';
+            msg.ordersIds = data.ordersIds;
+
+            port.postMessage( msg );
+          } else {
+            alert( 'Нечего экспортировать' );
+          }
+        },
+        error: err => {
+          alert( `Ошибка запроса: ${err}` );
+        }
+      });
+    })
+  }
+
+  function sendTask( button, taskName ) {
     var maybeOrderId = $( button ).attr( 'data-taobao_order_id' ),
         tbOrderId = maybeOrderId || prompt('Введите номер заказа Taobao').replace( /\s+/g, '' ),
         msg = {
           storeId: $( button ).attr( 'data-store_id' ),
           managerLogin: $( button ).attr( 'data-manager_login' ),
-          taskName: task,
+          taskName: taskName,
           from: 'yarlan'
         };
 

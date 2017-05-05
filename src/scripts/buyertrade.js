@@ -5,7 +5,6 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15';
 
 $( document ).ready( function() {
-  window.stop();  // stop long loading taobao page
   port = chrome.runtime.connect( {name: 'taobao'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
@@ -13,8 +12,33 @@ $( document ).ready( function() {
     case 'getOrderInfo':
       getSendOrderData( msg );
       break;
+
     case 'getTrack':
       getSendTrack( msg );
+      break;
+
+    case 'getAllTracks':
+      /* what ive got
+      {
+        managerLogin: String
+        taskName: String
+        ordersIds: Array of Objects
+      }
+      */
+      let manager = msg.managerLogin,
+          taskName = msg.taskName;
+
+      $( msg.ordersIds ).each( function() {
+        let task = {
+          storeId: this.store_id,
+          managerLogin: manager,
+          taskName: taskName,
+          taobaoOrderId: this.taobao_order_id
+        };
+
+        getSendTrack( task );
+      });
+
       break;
     }
   });
@@ -27,6 +51,26 @@ function getXMLHttp(){
   catch( evt ){
     return new XMLHttpRequest();
   }
+}
+
+function getSendTrack( task ) {
+  var trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
+      msg = {
+        task: task,
+        from: 'taobao'
+      };
+
+  $.ajax({
+    url: trackUrl,
+    success: data => {
+      msg.task.track = data.expressId;
+      port.postMessage( msg );
+    },
+    error: err => {
+      msg.error = err;
+      port.postMessage( msg );
+    }
+  });
 }
 
 function getSendOrderData( task ) {
@@ -55,26 +99,6 @@ function getSendOrderData( task ) {
       sendMessageToBg( this.responseText, task );
     }
   };
-}
-
-function getSendTrack( task ) {
-  var trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
-      msg = {
-        task: task,
-        from: 'taobao'
-      };
-
-  $.ajax({
-    url: trackUrl,
-    success: data => {
-      msg.task.track = data.expressId;
-      port.postMessage( msg );
-    },
-    error: err => {
-      msg.error = err;
-      port.postMessage( msg );
-    }
-  });
 }
 
 function getDelivery( data ) {
@@ -151,6 +175,9 @@ function testRequest() {
   // getSendOrderData( task1 );
 }
 
-// testRequest();
+// [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(() => {
+//   testRequest();
+// })
+
 
 // test

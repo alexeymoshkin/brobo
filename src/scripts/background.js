@@ -30,23 +30,6 @@ function takeSendDataApi( task, data, action ) {
   return d;
 }
 
-function callPerformTask( task ) {
-  switch ( task.taskName ) {
-  case 'getOrderInfo':
-    maybeOpenTaobaoTab().done( function(){
-      // if tab open now
-
-    }).fail( function() {
-      // if no need to open tab - its already exist
-      chrome.tabs.query( {url: urlTbRegx}, function( tabs ) {
-        chrome.tabs.sendMessage( tabs[0].id, task );
-      });
-    });
-
-    break;
-  }
-}
-
 function checkManager( login ) {
   var d = $.Deferred();
 
