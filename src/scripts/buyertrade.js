@@ -164,20 +164,30 @@ function testRequest() {
         managerLogin: 'krasrab',
         taskName: 'getOrderInfo'
       },
-      taskTrack = {
+      taskTrack1 = {
         taobaoOrderId: '11508210996654967',
         storeId: '53',
         managerLogin: 'krasrab5',
         taskName: 'getTrack'
+      },
+      taskTrack2 = {
+        taobaoOrderId: '17348469773696895',
+        storeId: '13',
+        managerLogin: 'krasrab',
+        taskName: 'getTrack'
+      },
+      taskTrackUndef = {
+        taobaoOrderId: '15546229474696895',
+        storeId: '51',
+        managerLogin: 'krasrab',
+        taskName: 'getTrack'
       };
 
-  getSendTrack( taskTrack );
+  getSendTrack( taskTrack2 );
   // getSendOrderData( task1 );
 }
 
-// [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(() => {
-//   testRequest();
-// })
+testRequest();
 
 
 // test

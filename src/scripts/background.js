@@ -5,6 +5,19 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/order_item.php*",
     Port;
 
+function cleanMsg( msg ){
+  delete msg.orderData;
+  delete msg.orderItemsData;
+  delete msg.from;
+  return msg;
+}
+
+function sendMsgYarlan( msg ) {
+  chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
+    chrome.tabs.sendMessage( tabs[0].id, msg );
+  });
+}
+
 function takeSendDataApi( task, data, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
@@ -85,41 +98,6 @@ function handleYarlanMsg( msg ) {
   });
 }
 
-function handleTaobaoMsg( msg ) {
-  if ( msg.error ) {
-    chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
-      chrome.tabs.sendMessage( tabs[0].id, msg );
-    });
-    return;
-  }
-
-  $.when(
-    handleMsgTask( msg )
-
-  ).always( function() {
-    msg = cleanMsg( msg );
-
-  }).done( function() {
-    chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
-      chrome.tabs.sendMessage( tabs[0].id, msg );
-    });
-
-  }).fail( function() {
-    msg.error = 'Не удалось отправить данные на сервер';
-
-    chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
-      chrome.tabs.sendMessage( tabs[0].id, msg );
-    });
-  });
-}
-
-function cleanMsg( msg ){
-  delete msg.orderData;
-  delete msg.orderItemsData;
-  delete msg.from;
-  return msg;
-}
-
 function handleMsgTask( msg ){
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
@@ -129,9 +107,35 @@ function handleMsgTask( msg ){
     break;
 
   case 'getTrack':
+    if ( msg.task.track === undefined ) {
+      msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
+      break;
+    }
+
     return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
     break;
   }
+}
+
+function handleTaobaoMsg( msg ) {
+  if ( msg.error ) {
+    sendMsgYarlan( msg );
+    return;
+  }
+
+  $.when(
+    handleMsgTask( msg )
+
+  ).always( () => {
+    msg = cleanMsg( msg );
+
+  }).fail( () => {
+    msg.error = 'Не удалось отправить данные на сервер';
+    sendMsgYarlan( msg );
+
+  }).then( () => {
+    sendMsgYarlan( msg );
+  });
 }
 
 
