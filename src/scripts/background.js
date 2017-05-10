@@ -101,13 +101,14 @@ function handleYarlanMsg( msg ) {
 function handleMsgTask( msg ){
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
-    var d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
+    let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
         d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
     return d1, d2;
     break;
 
   case 'getTrack':
     if ( msg.task.track === undefined ) {
+      console.log('shto', msg.task.track);
       msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
       break;
     }
@@ -139,10 +140,11 @@ function handleTaobaoMsg( msg ) {
 }
 
 
-chrome.runtime.onConnect.addListener( function( port ){
+chrome.runtime.onConnect.addListener( port => {
   Port = port;
 
-  port.onMessage.addListener( function ( msg ){
+  port.onMessage.addListener( msg => {
+    console.log(msg);
     switch( msg.from ) {
     case 'yarlan':
       handleYarlanMsg( msg );

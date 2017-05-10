@@ -18,13 +18,6 @@ $( document ).ready( function() {
       break;
 
     case 'getAllTracks':
-      /* what ive got
-      {
-        managerLogin: String
-        taskName: String
-        ordersIds: Array of Objects
-      }
-      */
       let manager = msg.managerLogin,
           taskName = msg.taskName;
 
@@ -42,6 +35,9 @@ $( document ).ready( function() {
       break;
     }
   });
+
+  // test
+  testRequest();
 });
 
 function getXMLHttp(){
@@ -53,28 +49,8 @@ function getXMLHttp(){
   }
 }
 
-function getSendTrack( task ) {
-  var trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
-      msg = {
-        task: task,
-        from: 'taobao'
-      };
-
-  $.ajax({
-    url: trackUrl,
-    success: data => {
-      msg.task.track = data.expressId;
-      port.postMessage( msg );
-    },
-    error: err => {
-      msg.error = err;
-      port.postMessage( msg );
-    }
-  });
-}
-
 function getSendOrderData( task ) {
-  var orderUrl = "https://buyertrade.taobao.com/trade/itemlist/asyncBought.htm?action=itemlist/BoughtQueryAction&event_submit_do_query=1&_input_charset=utf8",
+  let orderUrl = "https://buyertrade.taobao.com/trade/itemlist/asyncBought.htm?action=itemlist/BoughtQueryAction&event_submit_do_query=1&_input_charset=utf8",
       xhr = getXMLHttp(),
       data = formDataStr + '&itemTitle=' + task.taobaoOrderId + '&auctionTitle=' + task.taobaoOrderId + '&prePageNo=1';
 
@@ -96,13 +72,48 @@ function getSendOrderData( task ) {
         error: 'Не удалось получить данные'
       });
     } else {
+      console.log('task', task);
+      maybeSendTrack( this.responseText, task );
       sendMessageToBg( this.responseText, task );
     }
   };
 }
 
+function maybeSendTrack( data, task ) {
+  let orderOperations = JSON.parse( data ).mainOrders[0].statusInfo.operations;
+
+  $( orderOperations ).each( function() {
+    if ( this.id == 'viewLogistic' ) {
+      getSendTrack( task );
+    }
+  });
+}
+
+function getSendTrack( task ) {
+  let trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
+      msg = {
+        task: task,
+        from: 'taobao'
+      };
+
+  msg.task.taskName = 'getTrack';
+
+  $.ajax({
+    url: trackUrl,
+    success: data => {
+      msg.task.track = data.expressId;
+      console.log('msg track ', msg);
+      port.postMessage( msg );
+    },
+    error: err => {
+      msg.error = err;
+      port.postMessage( msg );
+    }
+  });
+}
+
 function getDelivery( data ) {
-  var dataObj = JSON.parse( data ),
+  let dataObj = JSON.parse( data ),
       delivery = dataObj.mainOrders[0].payInfo.postFees[0].value.replace("￥", '');
 
   return delivery;
@@ -117,10 +128,15 @@ function isItemsNotExist( jsonStr ) {
 }
 
 function sendMessageToBg( response, task ) {
-  var msg = {
+  let msg = {
     task: task,
     from: 'taobao'
   };
+
+  console.log('TASk', task);
+  console.log('MSG', msg);
+
+  // msg.task.taskName = 'getOrderInfo';
 
   if ( isItemsNotExist( response ) ) {
     msg.error = 'Номер заказа не соответствует менеджеру Taobao';
@@ -129,11 +145,12 @@ function sendMessageToBg( response, task ) {
     msg.orderItemsData = createOrderItemsObj( response );
     msg.task.delivery = getDelivery( response );
   }
+  console.log('msg order ', msg);
   port.postMessage( msg );
 }
 
 function createOrderItemsObj( jsonStr ) {
-  var obj = { items: [] },
+  let obj = { items: [] },
       items = JSON.parse( jsonStr ).mainOrders[0].subOrders;
 
   $( items ).each( function() {
@@ -159,7 +176,7 @@ function testRequest() {
     taskName: 'getOrderInfo'
   },
       task2 = {
-        taobaoOrderId: '9287608309696895',
+        taobaoOrderId: '17348469765696895',
         storeId: '62',
         managerLogin: 'krasrab',
         taskName: 'getOrderInfo'
@@ -183,11 +200,11 @@ function testRequest() {
         taskName: 'getTrack'
       };
 
-  getSendTrack( taskTrack2 );
-  // getSendOrderData( task1 );
+  // getSendTrack( taskTrack2 );
+  getSendOrderData( task2 );
 }
 
-testRequest();
+
 
 
 // test
