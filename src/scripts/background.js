@@ -108,7 +108,8 @@ function handleMsgTask( msg ){
 
   case 'getTrack':
     if ( msg.task.track === undefined ) {
-      console.log('shto', msg.task.track);
+      // если трека нет
+      console.log('shto', msg);
       msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
       break;
     }

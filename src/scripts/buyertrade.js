@@ -72,7 +72,6 @@ function getSendOrderData( task ) {
         error: 'Не удалось получить данные'
       });
     } else {
-      console.log('task', task);
       maybeSendTrack( this.responseText, task );
       sendMessageToBg( this.responseText, task );
     }
@@ -91,23 +90,24 @@ function maybeSendTrack( data, task ) {
 
 function getSendTrack( task ) {
   let trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
-      msg = {
-        task: task,
+      trackTask = task,
+      trackTaskMsg = {
+        task: trackTask,
         from: 'taobao'
       };
-
-  msg.task.taskName = 'getTrack';
 
   $.ajax({
     url: trackUrl,
     success: data => {
-      msg.task.track = data.expressId;
-      console.log('msg track ', msg);
-      port.postMessage( msg );
+      trackTaskMsg.task.taskName = 'getTrack';
+      trackTaskMsg.task.track = data.expressId;
+      console.log('TRACK', trackTaskMsg);
+      port.postMessage( trackTaskMsg );
     },
     error: err => {
-      msg.error = err;
-      port.postMessage( msg );
+      trackTaskMsg.task.taskName = 'getTrack';
+      trackTaskMsg.error = err;
+      port.postMessage( trackTaskMsg );
     }
   });
 }
@@ -128,25 +128,28 @@ function isItemsNotExist( jsonStr ) {
 }
 
 function sendMessageToBg( response, task ) {
-  let msg = {
-    task: task,
-    from: 'taobao'
-  };
+  let orderTask = task,
+      orderTaskMsg = {
+        task: orderTask,
+        from: 'taobao'
+      };
 
-  console.log('TASk', task);
-  console.log('MSG', msg);
+  orderTaskMsg.task.taskName = 'getOrderInfo';
 
-  // msg.task.taskName = 'getOrderInfo';
+  console.log('ORDER TASK', orderTask);
+  console.log('ORDER TASK MSG', orderTaskMsg);
 
   if ( isItemsNotExist( response ) ) {
     msg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
-    msg.orderData = JSON.parse( response );
-    msg.orderItemsData = createOrderItemsObj( response );
-    msg.task.delivery = getDelivery( response );
+    orderTaskMsg.orderData = JSON.parse( response );
+    orderTaskMsg.orderItemsData = createOrderItemsObj( response );
+    orderTaskMsg.task.delivery = getDelivery( response );
   }
-  console.log('msg order ', msg);
-  port.postMessage( msg );
+
+  console.log('ORDER TASK MSG', orderTaskMsg);
+
+  port.postMessage( orderTaskMsg );
 }
 
 function createOrderItemsObj( jsonStr ) {

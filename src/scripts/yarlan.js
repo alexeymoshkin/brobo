@@ -26,7 +26,7 @@ $( document ).ready( function() {
 
   // MAIN FUNCTIONS
   var findTrackButtonSetOnclick = setInterval( function() {
-    let button = $( 'a#import_all_tb_tracks' );
+    let button = $( 'a#ImportTrackForAllOrders' );
 
     if( button ) {
       clearInterval( findTrackButtonSetOnclick );
