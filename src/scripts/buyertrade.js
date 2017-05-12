@@ -90,7 +90,12 @@ function maybeSendTrack( data, task ) {
 
 function getSendTrack( task ) {
   let trackUrl = 'https://buyertrade.taobao.com/trade/json/transit_step.do?bizOrderId=' + task.taobaoOrderId,
-      trackTask = task,
+      trackTask = {
+        taobaoOrderId: task.taobaoOrderId,
+        storeId: task.storeId,
+        managerLogin: task.managerLogin,
+        taskName: 'getTrack'
+      },
       trackTaskMsg = {
         task: trackTask,
         from: 'taobao'
@@ -99,13 +104,11 @@ function getSendTrack( task ) {
   $.ajax({
     url: trackUrl,
     success: data => {
-      trackTaskMsg.task.taskName = 'getTrack';
       trackTaskMsg.task.track = data.expressId;
-      console.log('TRACK', trackTaskMsg);
+      console.log('track', trackTaskMsg);
       port.postMessage( trackTaskMsg );
     },
     error: err => {
-      trackTaskMsg.task.taskName = 'getTrack';
       trackTaskMsg.error = err;
       port.postMessage( trackTaskMsg );
     }
@@ -128,26 +131,26 @@ function isItemsNotExist( jsonStr ) {
 }
 
 function sendMessageToBg( response, task ) {
-  let orderTask = task,
+  let orderTask = {
+    taobaoOrderId: task.taobaoOrderId,
+    storeId: task.storeId,
+    managerLogin: task.managerLogin,
+    taskName: 'getOrderInfo'
+  },
       orderTaskMsg = {
         task: orderTask,
         from: 'taobao'
       };
 
-  orderTaskMsg.task.taskName = 'getOrderInfo';
-
-  console.log('ORDER TASK', orderTask);
-  console.log('ORDER TASK MSG', orderTaskMsg);
-
   if ( isItemsNotExist( response ) ) {
-    msg.error = 'Номер заказа не соответствует менеджеру Taobao';
+    orderTaskMsg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
     orderTaskMsg.orderData = JSON.parse( response );
     orderTaskMsg.orderItemsData = createOrderItemsObj( response );
     orderTaskMsg.task.delivery = getDelivery( response );
   }
 
-  console.log('ORDER TASK MSG', orderTaskMsg);
+  console.log(orderTaskMsg);
 
   port.postMessage( orderTaskMsg );
 }
