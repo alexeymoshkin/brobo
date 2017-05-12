@@ -104,18 +104,14 @@ function handleMsgTask( msg ){
     let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
         d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
     return d1, d2;
-    break;
 
   case 'getTrack':
     if ( msg.task.track === undefined ) {
-      // если трека нет
-      console.log('shto', msg);
       msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
       break;
     }
 
     return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
-    break;
   }
 }
 

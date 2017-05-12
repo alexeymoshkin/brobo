@@ -105,7 +105,6 @@ function getSendTrack( task ) {
     url: trackUrl,
     success: data => {
       trackTaskMsg.task.track = data.expressId;
-      console.log('track', trackTaskMsg);
       port.postMessage( trackTaskMsg );
     },
     error: err => {
@@ -149,8 +148,6 @@ function sendMessageToBg( response, task ) {
     orderTaskMsg.orderItemsData = createOrderItemsObj( response );
     orderTaskMsg.task.delivery = getDelivery( response );
   }
-
-  console.log(orderTaskMsg);
 
   port.postMessage( orderTaskMsg );
 }
