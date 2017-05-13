@@ -2,7 +2,7 @@
 
 var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlTbRegx = "*://buyertrade.taobao.com/trade/itemlist/list_bought_items.htm*",
-    urlYrlRegx = "*://ap.yarlan.ru/order_item.php*",
+    urlYrlRegx = "*://ap.yarlan.ru/*",
     Port;
 
 function cleanMsg( msg ){
@@ -98,23 +98,6 @@ function handleYarlanMsg( msg ) {
   });
 }
 
-function handleMsgTask( msg ){
-  switch( msg.task.taskName ) {
-  case 'getOrderInfo':
-    let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
-        d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
-    return d1, d2;
-
-  case 'getTrack':
-    if ( msg.task.track === undefined ) {
-      msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
-      break;
-    }
-
-    return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
-  }
-}
-
 function handleTaobaoMsg( msg ) {
   if ( msg.error ) {
     sendMsgYarlan( msg );
@@ -134,6 +117,23 @@ function handleTaobaoMsg( msg ) {
   }).then( () => {
     sendMsgYarlan( msg );
   });
+}
+
+function handleMsgTask( msg ){
+  switch( msg.task.taskName ) {
+  case 'getOrderInfo':
+    let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
+        d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
+    return d1, d2;
+
+  case 'getTrack':
+    if ( msg.task.track === undefined ) {
+      msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
+      break;
+    }
+
+    return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
+  }
 }
 
 

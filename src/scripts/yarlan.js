@@ -54,20 +54,20 @@ $( document ).ready( function() {
   }
 
   function createOnclickRequest( button ) {
-    let manager = $( button ).attr( 'data-manager_login' ),
+    var manager = $( button ).attr( 'data-manager_login' ),
         url = `http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackImport&manager_login=${manager}`,
-        msg;
+        msg = {
+          managerLogin: manager,
+          taskName: 'getAllTracks',
+          from: 'yarlan'
+        };
 
     $( button ).click( function() {
       $.ajax({
         url: url,
-        success: data => {
-          if( data.ordersIds.length ) {
-            msg.managerLogin = manager;
-            msg.taskName = 'getAllTracks';
-            msg.from = 'yarlan';
-            msg.ordersIds = data.ordersIds;
-
+        success: response => {
+          if( response.data.length ) {
+            msg.ordersIds = response.data;
             port.postMessage( msg );
           } else {
             alert( 'Нечего экспортировать' );

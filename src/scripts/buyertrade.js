@@ -18,14 +18,11 @@ $( document ).ready( function() {
       break;
 
     case 'getAllTracks':
-      let manager = msg.managerLogin,
-          taskName = msg.taskName;
-
       $( msg.ordersIds ).each( function() {
         let task = {
           storeId: this.store_id,
-          managerLogin: manager,
-          taskName: taskName,
+          managerLogin: msg.managerLogin,
+          taskName: 'getTrack',
           taobaoOrderId: this.taobao_order_id
         };
 
@@ -35,9 +32,7 @@ $( document ).ready( function() {
       break;
     }
   });
-
-  // test
-  testRequest();
+  // testRequest();
 });
 
 function getXMLHttp(){
