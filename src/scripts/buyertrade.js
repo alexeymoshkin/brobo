@@ -18,14 +18,18 @@ $( document ).ready( function() {
       break;
 
     case 'getAllTracks':
-      handleGetAllTracks( msg );
+      handleGetAllSmth( msg, getSendTrack );
+      break;
+
+    case 'getAllStatuses':
+      handleGetAllSmth( msg, getSendStatus );
       break;
     }
   });
   // testRequest();
 });
 
-function handleGetAllTracks( msg ) {
+function handleGetAllSmth( msg, getOneSmth ) {
   $( msg.ordersIds ).each( (i, val) => {
     let task = {
       length: msg.ordersIds.length,
@@ -37,7 +41,7 @@ function handleGetAllTracks( msg ) {
 
     if ( ++i == task.length ) task.done = true;
 
-    getSendTrack( task );
+    getOneSmth( task );
   });
 }
 
@@ -66,17 +70,29 @@ function getSendOrderData( task ) {
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
 
-    if ( this.status != 200 ) {
-      port.postMessage({
-        task: task,
-        from: 'taobao',
-        error: 'Не удалось получить данные'
-      });
-    } else {
-      maybeSendTrack( this.responseText, task );
-      sendMessageToBg( this.responseText, task );
-    }
+    responseHandler( this, task );
   };
+}
+
+function responseHandler( result, task ) {
+  if ( result.status != 200 ) {
+    port.postMessage({
+      task: task,
+      from: 'taobao',
+      error: 'Не удалось получить данные'
+    });
+  } else {
+    switch ( task.taskName ) {
+    case 'getOrderInfo':
+      maybeSendTrack( result.responseText, task );
+      sendMessageToBg( result.responseText, task );
+      break;
+
+    case 'getAllStatuses':
+
+      break;
+    }
+  }
 }
 
 function maybeSendTrack( data, task ) {
@@ -129,6 +145,13 @@ function getDelivery( data ) {
   return delivery;
 }
 
+function getStatus( data ) {
+  let dataObj = JSON.parse( data ),
+      status = dataObj.mainOrders[0].extraInfo.tradeStatus;
+
+  return status;
+}
+
 function isItemsNotExist( jsonStr ) {
   if( jsonStr.length === 0 ) return true;
   var json = JSON.parse( jsonStr );
@@ -142,7 +165,7 @@ function sendMessageToBg( response, task ) {
     taobaoOrderId: task.taobaoOrderId,
     storeId: task.storeId,
     managerLogin: task.managerLogin,
-    taskName: 'getOrderInfo'
+    taskName: task.taskName
   },
       orderTaskMsg = {
         task: orderTask,
@@ -152,9 +175,16 @@ function sendMessageToBg( response, task ) {
   if ( isItemsNotExist( response ) ) {
     orderTaskMsg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
-    orderTaskMsg.orderData = JSON.parse( response );
-    orderTaskMsg.orderItemsData = createOrderItemsObj( response );
-    orderTaskMsg.task.delivery = getDelivery( response );
+    switch ( task.taskName ) {
+    case 'getOrderInfo':
+      orderTaskMsg.orderData = JSON.parse( response );
+      orderTaskMsg.orderItemsData = createOrderItemsObj( response );
+      orderTaskMsg.task.delivery = getDelivery( response );
+      break;
+
+    case 'getAllStatuses':
+      orderTaskMsg.orderStatus = getStatus( response );
+    }
   }
 
   port.postMessage( orderTaskMsg );

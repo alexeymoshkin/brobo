@@ -1,5 +1,15 @@
 'use strict';
 
+const tracksEP = 'http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackImport&manager_login=',
+      statusesEP = 'http://ap.yarlan.ru/site/db/saver.php?action=getOrdersForStatusImport&manager_login=',
+      alerts = {
+        done: {
+          'getAllTracks': 'Трек номера импортированы! Нажмите "ОК"',
+          'getAllStatuses': 'Taobao статусы для заказов импортированы! Нажмите "ОК"'
+        }
+      },
+      multiTask = ['getAllTracks', 'getAllStatuses'];
+
 var port;
 
 $( document ).ready( function() {
@@ -7,9 +17,10 @@ $( document ).ready( function() {
 
   chrome.runtime.onMessage.addListener( function( msg ) {
     console.log( msg );
-    if ( msg.task.taskName == 'getAllTracks' ) {
+
+    if ( multiTask.includes( msg.task.taskName ) ) {
       if ( msg.task.done ) {
-        alert( 'Трек номера импортированы! Нажмите "ОК"' );
+        alert( alerts.done[ msg.task.taskName ] );
         location.reload();
       }
       return;
@@ -33,17 +44,28 @@ $( document ).ready( function() {
     }
   });
 
-  // MAIN FUNCTIONS
-  var findTrackButtonSetOnclick = setInterval( function() {
+  // import tracks for all orders
+  var findTrackButtonSetOnclick = setInterval( () => {
     let button = $( 'a#ImportTrackForAllOrders' );
 
     if( button ) {
       clearInterval( findTrackButtonSetOnclick );
-      createOnclickRequest( button );
+      createRequest( button, tracksEP, 'getAllTracks' );
     }
   }, 100);
 
-  var findButtonsSetOnclick = setInterval( function() {
+  // import status for all orders
+  var findStatusButtonSetOnclick = setInterval( () => {
+    let button = $( 'a#ImportStatusForAllOrders' );
+
+    if( button ) {
+      clearInterval( findStatusButtonSetOnclick );
+      createRequest( button, statusesEP, 'getAllStatuses' );
+    }
+  }, 100);
+
+  // import track and taobao info for single order
+  var findButtonsSetOnclick = setInterval( () => {
     let importButtons = $( 'span.import_from_taobao' ),
         trackButtons = $( 'span.import_taobao_track' );
 
@@ -62,12 +84,12 @@ $( document ).ready( function() {
     });
   }
 
-  function createOnclickRequest( button ) {
+  function createRequest( button, uri, taskName ) {
     var manager = $( button ).attr( 'data-manager_login' ),
-        url = `http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackImport&manager_login=${manager}`,
+        url = uri + manager,
         msg = {
           managerLogin: manager,
-          taskName: 'getAllTracks',
+          taskName: taskName,
           from: 'yarlan'
         };
 
@@ -86,7 +108,7 @@ $( document ).ready( function() {
           alert( `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}` );
         }
       });
-    })
+    });
   }
 
   function sendTask( button, taskName ) {
