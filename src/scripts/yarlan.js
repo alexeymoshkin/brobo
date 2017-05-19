@@ -83,7 +83,7 @@ $( document ).ready( function() {
           }
         },
         error: err => {
-          alert( `Ошибка запроса: ${err}` );
+          alert( `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}` );
         }
       });
     })
