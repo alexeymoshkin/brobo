@@ -100,6 +100,7 @@ function handleYarlanMsg( msg ) {
 
 function handleTaobaoMsg( msg ) {
   if ( msg.error ) {
+    msg = cleanMsg( msg );
     sendMsgYarlan( msg );
     return;
   }
@@ -127,12 +128,17 @@ function handleMsgTask( msg ){
     return d1, d2;
 
   case 'getTrack':
-    if ( msg.task.track === undefined ) {
+    if ( !msg.task.track ) {
       msg.error = `Заказ ${msg.task.taobaoOrderId} еще не отпарвлен - трека нет`;
       break;
     }
 
+  case 'getAllTracks':
+    if ( !msg.task.track ) break;
+
+  case 'getTrack', 'getAllTracks':
     return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
+
   }
 }
 

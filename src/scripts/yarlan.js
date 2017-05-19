@@ -3,9 +3,18 @@
 var port;
 
 $( document ).ready( function() {
-  port = chrome.runtime.connect( {name: 'yarlan'} );
+ port = chrome.runtime.connect( {name: 'yarlan'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
+    console.log( msg );
+    if ( msg.task.taskName == 'getAllTracks' ) {
+      if ( msg.task.done ) {
+        alert( 'Трек номера импортированы! Нажмите "ОК"' );
+        location.reload();
+      }
+      return;
+    }
+
     if ( msg.error  ) {
       switch ( msg.error ) {
       case 'wrongManager':
@@ -19,8 +28,8 @@ $( document ).ready( function() {
         break;
       }
     } else {
-      alert( 'Данные импортированы! Нажмите ОК' );
-      location.reload();
+      alert( 'Данные импортированы! Нажмите "ОК"' );
+      // location.reload();
     }
   });
 

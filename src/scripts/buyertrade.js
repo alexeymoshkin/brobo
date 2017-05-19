@@ -18,22 +18,28 @@ $( document ).ready( function() {
       break;
 
     case 'getAllTracks':
-      $( msg.ordersIds ).each( function() {
-        let task = {
-          storeId: this.store_id,
-          managerLogin: msg.managerLogin,
-          taskName: 'getTrack',
-          taobaoOrderId: this.taobao_order_id
-        };
-
-        getSendTrack( task );
-      });
-
+      handleGetAllTracks( msg );
       break;
     }
   });
   // testRequest();
 });
+
+function handleGetAllTracks( msg ) {
+  $( msg.ordersIds ).each( (i, val) => {
+    let task = {
+      length: msg.ordersIds.length,
+      storeId: val.store_id,
+      managerLogin: msg.managerLogin,
+      taskName: msg.taskName,
+      taobaoOrderId: val.taobao_order_id
+    };
+
+    if ( ++i == task.length ) task.done = true;
+
+    getSendTrack( task );
+  });
+}
 
 function getXMLHttp(){
   try {
@@ -89,7 +95,8 @@ function getSendTrack( task ) {
         taobaoOrderId: task.taobaoOrderId,
         storeId: task.storeId,
         managerLogin: task.managerLogin,
-        taskName: 'getTrack'
+        taskName: task.taskName,
+        done: task.done
       },
       trackTaskMsg = {
         task: trackTask,
@@ -99,11 +106,17 @@ function getSendTrack( task ) {
   $.ajax({
     url: trackUrl,
     success: data => {
-      trackTaskMsg.task.track = data.expressId;
+      if ( data.isSuccess == 'true' ) {
+        trackTaskMsg.task.track = data.expressId;
+      } else if ( task.taskName !== 'getAllTracks' ) {
+        trackTaskMsg.error = 'Информация по треку не найдена';
+      }
       port.postMessage( trackTaskMsg );
     },
     error: err => {
-      trackTaskMsg.error = err;
+      if ( task.taskName !== 'getAllTracks' ) {
+        trackTaskMsg.error = `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}`;
+      }
       port.postMessage( trackTaskMsg );
     }
   });
@@ -174,7 +187,7 @@ function testRequest() {
     taskName: 'getOrderInfo'
   },
       task2 = {
-        taobaoOrderId: '17348469765696895',
+        taobaoOrderId: '20829391945696895',
         storeId: '62',
         managerLogin: 'krasrab',
         taskName: 'getOrderInfo'
@@ -197,12 +210,38 @@ function testRequest() {
         managerLogin: 'krasrab',
         taskName: 'getTrack'
       };
+  var getTracksMsg = {
+    managerLogin: 'krasrab',
+    taskName: 'getAllTracks',
+    ordersIds: [
+      {
+        manager: "krasrab",
+        store_id: "33",
+        taobao_order_id: "14525968699696895"
+      },
+      {
+        manager: "krasrab",
+        store_id: "34",
+        taobao_order_id: "20951271040696895"
+      },
+      {
+        manager: "krasrab",
+        store_id: "35",
+        taobao_order_id: "20829391945696895"
+      },
+      {
+        manager: "krasrab",
+        store_id: "31",
+        taobao_order_id: "18344711109696895"
+      },
+      {
+        manager: "krasrab",
+        store_id: "37",
+        taobao_order_id: "17973749221696895"
+      }
+    ]
+  };
 
-  // getSendTrack( taskTrack2 );
+  getSendTrack( taskTrack2 );
   getSendOrderData( task2 );
 }
-
-
-
-
-// test
