@@ -21,9 +21,10 @@ function sendMsgYarlan( msg ) {
 function takeSendDataApi( task, data, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
+      statusParam = task.orderStatus ? `&order_status=${task.orderStatus}` : '',
       trackParam = task.track ? `&track=${task.track}` : '',
       deliveryParam = task.delivery ? `&delivery=${task.delivery}` : '',
-      sendUrl =  `${apiUrl}?action=${action}&manager_login=${task.managerLogin}&order_id=${task.taobaoOrderId}&store_id=${task.storeId}${trackParam}${deliveryParam}`;
+      sendUrl =  `${apiUrl}?action=${action}&manager_login=${task.managerLogin}&order_id=${task.taobaoOrderId}&store_id=${task.storeId}${trackParam}${deliveryParam}${statusParam}`;
 
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );
@@ -133,6 +134,9 @@ function handleMsgTask( msg ){
       break;
     }
 
+  case 'getAllStatuses':
+    return takeSendDataApi( msg.task, '', 'sendOrderStatus' );
+
   case 'getAllTracks':
     if ( !msg.task.track ) break;
 
@@ -147,7 +151,7 @@ chrome.runtime.onConnect.addListener( port => {
   Port = port;
 
   port.onMessage.addListener( msg => {
-    console.log(msg);
+    console.log( msg );
     switch( msg.from ) {
     case 'yarlan':
       handleYarlanMsg( msg );

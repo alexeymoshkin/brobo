@@ -97,11 +97,12 @@ $( document ).ready( function() {
       $.ajax({
         url: url,
         success: response => {
+          console.log(response);
           if( response.data.length ) {
             msg.ordersIds = response.data;
             port.postMessage( msg );
           } else {
-            alert( 'Нечего экспортировать' );
+            alert( 'Нечего импортировать' );
           }
         },
         error: err => {

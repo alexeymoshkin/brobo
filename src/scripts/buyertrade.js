@@ -22,7 +22,7 @@ $( document ).ready( function() {
       break;
 
     case 'getAllStatuses':
-      handleGetAllSmth( msg, getSendStatus );
+      handleGetAllSmth( msg, getSendOrderData );
       break;
     }
   });
@@ -30,18 +30,25 @@ $( document ).ready( function() {
 });
 
 function handleGetAllSmth( msg, getOneSmth ) {
-  $( msg.ordersIds ).each( (i, val) => {
-    let task = {
-      length: msg.ordersIds.length,
-      storeId: val.store_id,
-      managerLogin: msg.managerLogin,
-      taskName: msg.taskName,
-      taobaoOrderId: val.taobao_order_id
-    };
+  $( msg.ordersIds ).each( function( index ) {
+    (function( that, i ) {
+      let task = {
+        length: msg.ordersIds.length,
+        storeId: that.store_id,
+        managerLogin: msg.managerLogin,
+        taskName: msg.taskName,
+        taobaoOrderId: that.taobao_order_id
+      };
 
-    if ( ++i == task.length ) task.done = true;
+      var t = setTimeout( () => {
+        if ( ++i == task.length ) {
+          console.log('TASK DONE', i, index, task);
+          task.done = true;
+        }
 
-    getOneSmth( task );
+        getOneSmth( task );
+      }, 400 * i );
+    })( this, index );
   });
 }
 
@@ -89,7 +96,7 @@ function responseHandler( result, task ) {
       break;
 
     case 'getAllStatuses':
-
+      sendMessageToBg( result.responseText, task );
       break;
     }
   }
@@ -147,7 +154,7 @@ function getDelivery( data ) {
 
 function getStatus( data ) {
   let dataObj = JSON.parse( data ),
-      status = dataObj.mainOrders[0].extraInfo.tradeStatus;
+      status = dataObj.mainOrders[0].extra.tradeStatus;
 
   return status;
 }
@@ -155,8 +162,8 @@ function getStatus( data ) {
 function isItemsNotExist( jsonStr ) {
   if( jsonStr.length === 0 ) return true;
   var json = JSON.parse( jsonStr );
-
-  if ( json.mainOrders.length ) return false;
+  console.log(json);
+  if ( json.mainOrders && json.mainOrders.length ) return false;
   return true;
 }
 
@@ -165,7 +172,8 @@ function sendMessageToBg( response, task ) {
     taobaoOrderId: task.taobaoOrderId,
     storeId: task.storeId,
     managerLogin: task.managerLogin,
-    taskName: task.taskName
+    taskName: task.taskName,
+    done: task.done
   },
       orderTaskMsg = {
         task: orderTask,
@@ -183,7 +191,7 @@ function sendMessageToBg( response, task ) {
       break;
 
     case 'getAllStatuses':
-      orderTaskMsg.orderStatus = getStatus( response );
+      orderTaskMsg.task.orderStatus = getStatus( response );
     }
   }
 
