@@ -2,7 +2,12 @@
 
 var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     port,
-    formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15';
+    formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15',
+    trackTaskName = {
+      'getOrderInfo': 'getTrack',
+      'getTrack': 'getTrack',
+      'getAllTracks': 'getAllTracks'
+    };
 
 $( document ).ready( function() {
   port = chrome.runtime.connect( {name: 'taobao'} );
@@ -42,7 +47,6 @@ function handleGetAllSmth( msg, getOneSmth ) {
 
       var t = setTimeout( () => {
         if ( ++i == task.length ) {
-          console.log('TASK DONE', i, index, task);
           task.done = true;
         }
 
@@ -118,7 +122,7 @@ function getSendTrack( task ) {
         taobaoOrderId: task.taobaoOrderId,
         storeId: task.storeId,
         managerLogin: task.managerLogin,
-        taskName: task.taskName,
+        taskName: trackTaskName[task.taskName],
         done: task.done
       },
       trackTaskMsg = {
@@ -162,7 +166,6 @@ function getStatus( data ) {
 function isItemsNotExist( jsonStr ) {
   if( jsonStr.length === 0 ) return true;
   var json = JSON.parse( jsonStr );
-  console.log(json);
   if ( json.mainOrders && json.mainOrders.length ) return false;
   return true;
 }
@@ -184,17 +187,18 @@ function sendMessageToBg( response, task ) {
     orderTaskMsg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
     switch ( task.taskName ) {
+    case 'getAllStatuses', 'getOrderInfo':
+      orderTaskMsg.task.orderStatus = getStatus( response );
+
     case 'getOrderInfo':
       orderTaskMsg.orderData = JSON.parse( response );
       orderTaskMsg.orderItemsData = createOrderItemsObj( response );
       orderTaskMsg.task.delivery = getDelivery( response );
       break;
-
-    case 'getAllStatuses':
-      orderTaskMsg.task.orderStatus = getStatus( response );
     }
   }
 
+  console.log( orderTaskMsg );
   port.postMessage( orderTaskMsg );
 }
 

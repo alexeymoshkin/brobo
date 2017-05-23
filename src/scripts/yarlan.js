@@ -5,7 +5,9 @@ const tracksEP = 'http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackI
       alerts = {
         done: {
           'getAllTracks': 'Трек номера импортированы! Нажмите "ОК"',
-          'getAllStatuses': 'Taobao статусы для заказов импортированы! Нажмите "ОК"'
+          'getAllStatuses': 'Taobao статусы для заказов импортированы! Нажмите "ОК"',
+          'getOrderInfo': 'Данные по заказу импортированы! Нажмите "ОК"',
+          'getTrack': 'Трек номер для этого заказа импортирован! Нажмите "ОК"'
         }
       },
       multiTask = ['getAllTracks', 'getAllStatuses'];
@@ -16,8 +18,6 @@ $( document ).ready( function() {
  port = chrome.runtime.connect( {name: 'yarlan'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
-    console.log( msg );
-
     if ( multiTask.includes( msg.task.taskName ) ) {
       if ( msg.task.done ) {
         alert( alerts.done[ msg.task.taskName ] );
@@ -39,8 +39,8 @@ $( document ).ready( function() {
         break;
       }
     } else {
-      alert( 'Данные импортированы! Нажмите "ОК"' );
-      // location.reload();
+      alert( alerts.done[msg.task.taskName] );
+      location.reload();
     }
   });
 
@@ -97,7 +97,6 @@ $( document ).ready( function() {
       $.ajax({
         url: url,
         success: response => {
-          console.log(response);
           if( response.data.length ) {
             msg.ordersIds = response.data;
             port.postMessage( msg );

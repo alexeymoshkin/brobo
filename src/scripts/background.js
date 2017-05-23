@@ -122,6 +122,7 @@ function handleTaobaoMsg( msg ) {
 }
 
 function handleMsgTask( msg ){
+  console.log( 'MSG', msg );
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
     let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
@@ -134,14 +135,14 @@ function handleMsgTask( msg ){
       break;
     }
 
-  case 'getAllStatuses':
-    return takeSendDataApi( msg.task, '', 'sendOrderStatus' );
-
   case 'getAllTracks':
     if ( !msg.task.track ) break;
 
   case 'getTrack', 'getAllTracks':
     return takeSendDataApi( msg.task, '', 'sendOrderTrack' );
+
+  case 'getAllStatuses':
+    return takeSendDataApi( msg.task, '', 'sendOrderStatus' );
 
   }
 }
@@ -151,7 +152,6 @@ chrome.runtime.onConnect.addListener( port => {
   Port = port;
 
   port.onMessage.addListener( msg => {
-    console.log( msg );
     switch( msg.from ) {
     case 'yarlan':
       handleYarlanMsg( msg );
