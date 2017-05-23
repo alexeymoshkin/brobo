@@ -187,18 +187,19 @@ function sendMessageToBg( response, task ) {
     orderTaskMsg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
     switch ( task.taskName ) {
-    case 'getAllStatuses', 'getOrderInfo':
+    case 'getAllStatuses':
       orderTaskMsg.task.orderStatus = getStatus( response );
+      break;
 
     case 'getOrderInfo':
       orderTaskMsg.orderData = JSON.parse( response );
       orderTaskMsg.orderItemsData = createOrderItemsObj( response );
       orderTaskMsg.task.delivery = getDelivery( response );
+      orderTaskMsg.task.orderStatus = getStatus( response );
       break;
     }
   }
 
-  console.log( orderTaskMsg );
   port.postMessage( orderTaskMsg );
 }
 

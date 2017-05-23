@@ -122,7 +122,6 @@ function handleTaobaoMsg( msg ) {
 }
 
 function handleMsgTask( msg ){
-  console.log( 'MSG', msg );
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
     let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
