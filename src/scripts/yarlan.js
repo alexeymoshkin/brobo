@@ -18,7 +18,7 @@ $( document ).ready( function() {
  port = chrome.runtime.connect( {name: 'yarlan'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
-    if ( multiTask.includes( msg.task.taskName ) ) {
+    if ( msg.task &&  multiTask.includes( msg.task.taskName ) ) {
       if ( msg.task.done ) {
         alert( alerts.done[ msg.task.taskName ] );
         location.reload();
@@ -74,7 +74,7 @@ $( document ).ready( function() {
       createOnclickAction( importButtons, 'getOrderInfo' );
       createOnclickAction( trackButtons, 'getTrack' );
     }
-  }, 250 ); //500
+  }, 250 );
 
   function createOnclickAction( buttons, taskName ) {
     $( buttons ).each( function( i ) {
