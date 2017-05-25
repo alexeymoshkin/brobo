@@ -32,6 +32,7 @@ $( document ).ready( function() {
     }
   });
   // testRequest();
+  getOrderPage();
 });
 
 function handleGetAllSmth( msg, getOneSmth ) {
@@ -170,6 +171,15 @@ function isItemsNotExist( jsonStr ) {
   return true;
 }
 
+function isItemCanceled( item ) {
+  let operationsStr = JSON.stringify( item.operations );
+
+  if ( operationsStr.indexOf( '"style":"t8"' ) > -1 ) {
+    return true;
+  }
+  return false;
+}
+
 function sendMessageToBg( response, task ) {
   let orderTask = {
     taobaoOrderId: task.taobaoOrderId,
@@ -210,9 +220,11 @@ function createOrderItemsObj( jsonStr ) {
   $( items ).each( function() {
     let item = {
       itemId: this.itemInfo.id,
+      optName: this.itemInfo.skuText[0].value,
       amount: this.quantity,
       price: this.priceInfo.realTotal,
-      imgUrl: this.itemInfo.pic
+      imgUrl: this.itemInfo.pic,
+      cancel: isItemCanceled( this )
     };
     obj.items.push( item );
   })
@@ -229,6 +241,12 @@ function testRequest() {
     managerLogin: 'krasrab5',
     taskName: 'getOrderInfo'
   },
+      taskCancelled = {
+        taobaoOrderId: '20120511558696895',
+        storeId: '62',
+        managerLogin: 'krasrab',
+        taskName: 'getOrderInfo'
+      },
       task2 = {
         taobaoOrderId: '20829391945696895',
         storeId: '62',
@@ -285,6 +303,6 @@ function testRequest() {
     ]
   };
 
-  getSendTrack( taskTrack2 );
-  getSendOrderData( task2 );
+  // getSendTrack( taskTrack2 );
+  getSendOrderData( taskCancelled );
 }

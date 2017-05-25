@@ -17,7 +17,7 @@
   },
   "applications": {
     "gecko": {
-      "id": "robomanager-public@alibaba24.ru"
+      "id": "robomanager@alibaba24.ru"
     }
   },
   "browser_action": {

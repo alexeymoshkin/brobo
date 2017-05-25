@@ -34,7 +34,7 @@ module.exports = function(grunt){
   });
 
   grunt.registerTask('build', [
-    'bump',
+    // 'bump',
     'compress'
   ]);
 
