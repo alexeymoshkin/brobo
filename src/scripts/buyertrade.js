@@ -32,7 +32,7 @@ $( document ).ready( function() {
     }
   });
   // testRequest();
-  getOrderPage();
+  // getOrderPage();
 });
 
 function handleGetAllSmth( msg, getOneSmth ) {
@@ -199,6 +199,9 @@ function sendMessageToBg( response, task ) {
     switch ( task.taskName ) {
     case 'getAllStatuses':
       orderTaskMsg.task.orderStatus = getStatus( response );
+      console.log('hello');
+      orderTaskMsg.task.orderPayDate = getOrderPageData( orderTask.taobaoOrderId, getOrderPayDate );
+      console.log( 'must be orderPayDate in it', orderTaskMsg );
       break;
 
     case 'getOrderInfo':
@@ -232,8 +235,38 @@ function createOrderItemsObj( jsonStr ) {
   return obj;
 }
 
+function getOrderPageData( orderId, getData ) {
+  $.ajax({
+    url: `https://trade.taobao.com/trade/detail/trade_order_detail.htm?biz_order_id=${orderId}`,
+    async: false,
+    success: data => {
+      let orderData = data.match( /var data = (.+)/ )[1],
+          orderDataObj = JSON.parse( orderData );
 
-// Test
+      return getData( orderDataObj );
+    },
+    error: err => {
+      console.log( 'error', err );
+    }
+  });
+}
+
+function getOrderPayDate( dataObj ) {
+  var payDate;
+
+  $( dataObj.orderBar.nodes ).each( node => {
+    if ( node.text == '付款到支付宝' ) {
+      payDate = node.date;
+    }
+  });
+
+  return payDate;
+}
+
+
+
+//////////////////////// TEST ////////////////////////
+
 function testRequest() {
   var task1 = {
     taobaoOrderId: '3254842308974967',
