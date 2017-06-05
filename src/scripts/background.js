@@ -24,7 +24,15 @@ function takeSendDataApi( task, data, action ) {
       statusParam = task.orderStatus ? `&order_status=${task.orderStatus}` : '',
       trackParam = task.track ? `&track=${task.track}` : '',
       deliveryParam = task.delivery ? `&delivery=${task.delivery}` : '',
-      sendUrl =  `${apiUrl}?action=${action}&manager_login=${task.managerLogin}&order_id=${task.taobaoOrderId}&store_id=${task.storeId}${trackParam}${deliveryParam}${statusParam}`;
+      payDateParam = task.orderPayDate ? `&order_pay_date=${task.orderPayDate}` : '',
+      sendUrl =  `${apiUrl}?action=${action}&
+manager_login=${task.managerLogin}&
+order_id=${task.taobaoOrderId}&
+store_id=${task.storeId}
+${trackParam}
+${deliveryParam}
+${statusParam}
+${payDateParam}`;
 
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );

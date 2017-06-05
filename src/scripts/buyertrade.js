@@ -12,6 +12,36 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
 $( document ).ready( function() {
   port = chrome.runtime.connect( {name: 'taobao'} );
 
+  let handleTmallOrder = orderId => {
+    let xhr = getXMLHttp();
+
+    xhr.open( 'GET', `https://trade.tmall.com/detail/orderDetail.htm?bizOrderId=${orderId}`, true );
+
+    xhr.setRequestHeader( 'Accept', 'application/json, text/javascript, */*; q=0.01' );
+    xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded; charset=UTF-8' );
+    xhr.setRequestHeader( 'X-requested-with', 'XMLHttpRequest' );
+
+    xhr.send();
+
+    xhr.onreadystatechange = function() {
+      if ( this.readyState != 4 ) return;
+
+      if ( this.status != 200 ) {
+        console.log( 'ERRROR', this );
+      } else {
+        let data = this.match( /var detailData = (.+)/ )[1],
+            dataObj = JSON.parse( data );
+
+        console.log( 'OK', page );
+
+        orderData = getData( dataObj );
+      }
+    };
+  };
+
+  handleTmallOrder( '24002930962696895' );
+
+
   chrome.runtime.onMessage.addListener( function( msg ) {
     switch ( msg.taskName ){
     case 'getOrderInfo':
@@ -52,7 +82,7 @@ function handleGetAllSmth( msg, getOneSmth ) {
         }
 
         getOneSmth( task );
-      }, 400 * i );
+      }, 700 * i );
     })( this, index );
   });
 }
@@ -82,33 +112,36 @@ function getSendOrderData( task ) {
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
 
-    responseHandler( this, task );
+    if ( this.status != 200 ) {
+      port.postMessage({
+        task: task,
+        from: 'taobao',
+        error: 'Не удалось получить данные'
+      });
+    } else {
+      let data = JSON.parse( this.responseText );
+      responseHandler( data, task );
+    }
   };
 }
 
-function responseHandler( result, task ) {
-  if ( result.status != 200 ) {
-    port.postMessage({
-      task: task,
-      from: 'taobao',
-      error: 'Не удалось получить данные'
-    });
-  } else {
-    switch ( task.taskName ) {
-    case 'getOrderInfo':
-      maybeSendTrack( result.responseText, task );
-      sendMessageToBg( result.responseText, task );
-      break;
+function responseHandler( data, task ) {
+  // if ( data.url ) handleCapcha( data.url );
 
-    case 'getAllStatuses':
-      sendMessageToBg( result.responseText, task );
-      break;
-    }
+  switch ( task.taskName ) {
+  case 'getOrderInfo':
+    maybeSendTrack( data, task );
+    sendMessageToBg( data, task );
+    break;
+
+  case 'getAllStatuses':
+    sendMessageToBg( data, task );
+    break;
   }
 }
 
 function maybeSendTrack( data, task ) {
-  let orderOperations = JSON.parse( data ).mainOrders[0].statusInfo.operations;
+  let orderOperations = data.mainOrders[0].statusInfo.operations;
 
   $( orderOperations ).each( function() {
     if ( this.id == 'viewLogistic' ) {
@@ -150,37 +183,30 @@ function getSendTrack( task ) {
   });
 }
 
-function getDelivery( data ) {
-  let dataObj = JSON.parse( data ),
-      delivery = dataObj.mainOrders[0].payInfo.postFees[0].value.replace("￥", '');
-
-  return delivery;
+function getDelivery( orderObj ) {
+  return orderObj.mainOrders[0].payInfo.postFees[0].value.replace("￥", '');
 }
 
-function getStatus( data ) {
-  let dataObj = JSON.parse( data ),
-      status = dataObj.mainOrders[0].extra.tradeStatus;
-
-  return status;
+function getStatus( orderObj ) {
+  return orderObj.mainOrders[0].extra.tradeStatus;
 }
 
-function isItemsNotExist( jsonStr ) {
-  if( jsonStr.length === 0 ) return true;
-  var json = JSON.parse( jsonStr );
-  if ( json.mainOrders && json.mainOrders.length ) return false;
+function isItemsNotExist( orderObj ) {
+  if ( $.isEmptyObject( orderObj ) ) return true;
+  if ( orderObj.mainOrders && orderObj.mainOrders.length ) return false;
+
   return true;
 }
 
 function isItemCanceled( item ) {
   let operationsStr = JSON.stringify( item.operations );
-
   if ( operationsStr.indexOf( '"style":"t8"' ) > -1 ) {
     return true;
   }
   return false;
 }
 
-function sendMessageToBg( response, task ) {
+function sendMessageToBg( data, task ) {
   let orderTask = {
     taobaoOrderId: task.taobaoOrderId,
     storeId: task.storeId,
@@ -193,37 +219,37 @@ function sendMessageToBg( response, task ) {
         from: 'taobao'
       };
 
-  if ( isItemsNotExist( response ) ) {
+  if ( isItemsNotExist( data ) ) {
     orderTaskMsg.error = 'Номер заказа не соответствует менеджеру Taobao';
   } else {
     switch ( task.taskName ) {
     case 'getAllStatuses':
-      orderTaskMsg.task.orderStatus = getStatus( response );
-      console.log('hello');
+      orderTaskMsg.task.orderStatus = getStatus( data );
       orderTaskMsg.task.orderPayDate = getOrderPageData( orderTask.taobaoOrderId, getOrderPayDate );
-      console.log( 'must be orderPayDate in it', orderTaskMsg );
+
       break;
 
     case 'getOrderInfo':
-      orderTaskMsg.orderData = JSON.parse( response );
-      orderTaskMsg.orderItemsData = createOrderItemsObj( response );
-      orderTaskMsg.task.delivery = getDelivery( response );
-      orderTaskMsg.task.orderStatus = getStatus( response );
+      orderTaskMsg.orderData = data;
+      orderTaskMsg.orderItemsData = createOrderItemsObj( data );
+      orderTaskMsg.task.delivery = getDelivery( data );
+      orderTaskMsg.task.orderStatus = getStatus( data );
       break;
     }
   }
 
+  console.log( 'ORDER TASK MSG', orderTaskMsg );
   port.postMessage( orderTaskMsg );
 }
 
-function createOrderItemsObj( jsonStr ) {
+function createOrderItemsObj( orderObj ) {
   let obj = { items: [] },
-      items = JSON.parse( jsonStr ).mainOrders[0].subOrders;
+      items = orderObj.mainOrders[0].subOrders;
 
   $( items ).each( function() {
     let item = {
       itemId: this.itemInfo.id,
-      optName: this.itemInfo.skuText[0].value,
+      options: this.itemInfo.skuText,
       amount: this.quantity,
       price: this.priceInfo.realTotal,
       imgUrl: this.itemInfo.pic,
@@ -236,33 +262,66 @@ function createOrderItemsObj( jsonStr ) {
 }
 
 function getOrderPageData( orderId, getData ) {
+  let orderData,
+      handleTmallOrder = orderId => {
+        $.ajax({
+          type: 'POST',
+          url: `trade.tmall.com/detail/orderDetail.htm?bizOrderId=${orderId}`,
+          async: true,
+          success: page => {
+            let data = page.match( /var detailData = (.+)/ )[1],
+                dataObj = JSON.parse( data );
+
+            orderData = getData( dataObj );
+          },
+          error: err => {
+            console.log( 'ERRROR', err );
+          }
+        });
+      };
+
   $.ajax({
     url: `https://trade.taobao.com/trade/detail/trade_order_detail.htm?biz_order_id=${orderId}`,
     async: false,
-    success: data => {
-      let orderData = data.match( /var data = (.+)/ )[1],
-          orderDataObj = JSON.parse( orderData );
+    success: page => {
+      let data = page.match( /var data = (.+)/ )[1],
+          dataObj = JSON.parse( data );
 
-      return getData( orderDataObj );
+      orderData = getData( dataObj );
     },
     error: err => {
-      console.log( 'error', err );
+      if ( err.readyState == 0 && err.status == 0 ) handleTmallOrder( orderId );
     }
   });
+
+  return orderData;
 }
 
 function getOrderPayDate( dataObj ) {
-  var payDate;
+  let tbDates = dataObj.orderBar,
+      tmDates = dataObj.stepbar,
+      payDate;
 
-  $( dataObj.orderBar.nodes ).each( node => {
-    if ( node.text == '付款到支付宝' ) {
-      payDate = node.date;
-    }
-  });
+  if ( tbDates ) payDate = tbDates.nodes[1].date;
+  if ( tmDates ) payDate = tmDates.options[1].time;
 
   return payDate;
 }
 
+function handleCapcha( url ) {
+  $.ajax({
+    url: url,
+    async: false,
+    success: data => {
+      let capchaUrl = JSON.parse( data ).url;
+      console.log( 'data', capchaUrl );
+
+      window.open( capchaUrl );
+
+      confirm( 'НАЖМИТЕ "ОК" ТОЛЬКО ПОСЛЕ ВВОДА КАПЧИ НА ОТКРЫВШЕЙСЯ ВКЛАДКЕ' );
+    }
+  });
+}
 
 
 //////////////////////// TEST ////////////////////////
