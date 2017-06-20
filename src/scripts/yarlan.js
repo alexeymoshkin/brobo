@@ -17,10 +17,12 @@ const api = 'http://ap.yarlan.ru/site/db/saver.php',
 var port;
 
 $( document ).ready( function() {
- port = chrome.runtime.connect( {name: 'yarlan'} );
+  addSpinner();
+  port = chrome.runtime.connect( {name: 'yarlan'} );
 
   chrome.runtime.onMessage.addListener( function( msg ) {
-    if ( msg.task &&  multiTask.includes( msg.task.taskName ) ) {
+
+    if ( msg.task && multiTask.includes( msg.task.taskName ) ) {
       if ( msg.task.done ) {
         alert( alerts.done[ msg.task.taskName ] );
         location.reload();
@@ -44,7 +46,9 @@ $( document ).ready( function() {
         break;
       }
     } else {
+      hideSpinner();
       alert( alerts.done[msg.task.taskName] );
+      if ( multiTask.includes( msg.task.taskName ) ) return;
       location.reload();
     }
   });
@@ -85,6 +89,7 @@ $( document ).ready( function() {
 function createOnclickAction( buttons, taskName ) {
   $( buttons ).each( ( i, button )  => {
     $( button ).click( function() {
+      displaySpinner();
       sendTask( button, taskName );
     });
   });
@@ -100,6 +105,7 @@ function createRequest( button, uri, taskName ) {
       };
 
   $( button ).click( function() {
+    displaySpinner();
     $.ajax({
       url: url,
       success: response => {
@@ -134,4 +140,33 @@ function sendTask( button, taskName ) {
 
   msg.taobaoOrderId = tbOrderId;
   port.postMessage( msg );
+}
+
+function addSpinner() {
+  let spinnerHtml = `
+  <div class="sk-circle hide">
+    <div class="sk-circle1 sk-child"></div>
+    <div class="sk-circle2 sk-child"></div>
+    <div class="sk-circle3 sk-child"></div>
+    <div class="sk-circle4 sk-child"></div>
+    <div class="sk-circle5 sk-child"></div>
+    <div class="sk-circle6 sk-child"></div>
+    <div class="sk-circle7 sk-child"></div>
+    <div class="sk-circle8 sk-child"></div>
+    <div class="sk-circle9 sk-child"></div>
+    <div class="sk-circle10 sk-child"></div>
+    <div class="sk-circle11 sk-child"></div>
+    <div class="sk-circle12 sk-child"></div>
+  </div>
+`;
+
+  $( 'body' ).prepend( spinnerHtml );
+}
+
+function hideSpinner() {
+  $( 'div.sk-circle' ).addClass( 'hide' );
+}
+
+function displaySpinner() {
+  $( 'div.sk-circle' ).removeClass( 'hide' );
 }
