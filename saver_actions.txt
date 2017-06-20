@@ -1,0 +1,79 @@
+Saver Actions
+
+1) sendOrderData
+
+   Необработанные данные о заказе taobao, полученные с помощью внутреннего запроса кабинета taobao
+
+   Параметры запроса:
+    action: sendOrderData - название экшена
+    manager_login: krasrab - логин менеджера на taobao
+    order_id: 19652869442696895 - номер заказа taobao
+    store_id: 81 - номер магазина на yarlan
+    delivery: 0.00 - доставка в Юанях за заказ taobao
+    order_status: TRADE_FINISHED - статус заказа
+
+   Тело запроса представляет собой json со всеми исходными данными по заказу таобао
+
+
+
+2) sendOrderItemsData
+
+   Минимальные данные о каждом товаре заказа
+
+   Параметры запроса:
+    Такие же как и sendOrderData(1)
+
+   Тело запроса:
+    items: [
+        amount: "1" - кол-во позиции товара
+        cancel: false - товар отменен в заказе taobao?
+        imgUrl: "//img.alicdn...." - ссылка на изображение купленного варианта товара
+        itemId: 541229802806 - taobao id товара
+        options: [ - массив выбранных опций товара
+            "颜色分类: 加厚180宽*200高CM+挂环"
+        ]
+    ]
+
+
+
+3) sendOrderTrack
+
+   Трек-номер заказа таобао
+
+   Параметры запроса:
+    action: sendOrderTrack - название экшена
+    manager_login: krasrab - логин менеджера на taobao
+    order_id: 19652869442696895 - номер заказа taobao
+    store_id: 81 - номер магазина на yarlan
+    track: 438389268417 - трек номер заказа taobao
+
+   Тело запроса пустое
+
+
+
+4) getOrdersForTrackImport
+
+   Список заказов для импорта треков
+
+   Параметры запроса:
+    action: getOrderForTrackImport - название экшена
+    manager_login: krasrab - логин менеджера на taobao
+
+   Ответ:
+    result: 1 - статус запроса
+    data: [
+        store_id: "12" - номер магазина на yarlan
+        taobao_order_id: "14039529353696895" - номер заказа taobao
+    ]
+
+
+
+5) getOrdersForStatusImport
+
+   Список заказов для импорта статусов
+
+   Параметры запроса:
+    action: getOrdersForStatusImport - название экшена
+    manager_login:krasrab - логин менеджера на taobao
+
+   Ответ как и в getOrdersForTrackImport(4), только соответствующая выборка id заказов

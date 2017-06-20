@@ -1,7 +1,6 @@
 'use strict';
 
-var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
-    port,
+var port,
     formDataStr = 'buyerNick&dateBegin=0&dateEnd=0&lastStartRow&logisticsService&options=0&orderStatus&queryBizType&queryOrder=desc&rateStatus&refund&sellerNick&pageNum=1&pageSize=15',
     trackTaskName = {
       'getOrderInfo': 'getTrack',
@@ -11,36 +10,6 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
 
 $( document ).ready( function() {
   port = chrome.runtime.connect( {name: 'taobao'} );
-
-  let handleTmallOrder = orderId => {
-    let xhr = getXMLHttp();
-
-    xhr.open( 'GET', `https://trade.tmall.com/detail/orderDetail.htm?bizOrderId=${orderId}`, true );
-
-    xhr.setRequestHeader( 'Accept', 'application/json, text/javascript, */*; q=0.01' );
-    xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded; charset=UTF-8' );
-    xhr.setRequestHeader( 'X-requested-with', 'XMLHttpRequest' );
-
-    xhr.send();
-
-    xhr.onreadystatechange = function() {
-      if ( this.readyState != 4 ) return;
-
-      if ( this.status != 200 ) {
-        console.log( 'ERRROR', this );
-      } else {
-        let data = this.match( /var detailData = (.+)/ )[1],
-            dataObj = JSON.parse( data );
-
-        console.log( 'OK', page );
-
-        orderData = getData( dataObj );
-      }
-    };
-  };
-
-  handleTmallOrder( '24002930962696895' );
-
 
   chrome.runtime.onMessage.addListener( function( msg ) {
     switch ( msg.taskName ){
@@ -61,6 +30,7 @@ $( document ).ready( function() {
       break;
     }
   });
+
   // testRequest();
   // getOrderPage();
 });
@@ -126,8 +96,6 @@ function getSendOrderData( task ) {
 }
 
 function responseHandler( data, task ) {
-  // if ( data.url ) handleCapcha( data.url );
-
   switch ( task.taskName ) {
   case 'getOrderInfo':
     maybeSendTrack( data, task );
@@ -183,6 +151,19 @@ function getSendTrack( task ) {
   });
 }
 
+function getOptsArr( item ) {
+  let optsObj = item.itemInfo.skuText,
+      optsArr = [];
+
+  if ( optsObj == {} ) return [];
+
+  $( optsObj ).each( function(){
+    optsArr.push( `${this.name}: ${this.value}` );
+  });
+
+  return optsArr;
+}
+
 function getDelivery( orderObj ) {
   return orderObj.mainOrders[0].payInfo.postFees[0].value.replace("￥", '');
 }
@@ -198,8 +179,14 @@ function isItemsNotExist( orderObj ) {
   return true;
 }
 
+function isItemEmpty( item ) {
+  if ( !item.id ) return true;
+  return false;
+}
+
 function isItemCanceled( item ) {
   let operationsStr = JSON.stringify( item.operations );
+
   if ( operationsStr.indexOf( '"style":"t8"' ) > -1 ) {
     return true;
   }
@@ -238,7 +225,6 @@ function sendMessageToBg( data, task ) {
     }
   }
 
-  console.log( 'ORDER TASK MSG', orderTaskMsg );
   port.postMessage( orderTaskMsg );
 }
 
@@ -247,9 +233,10 @@ function createOrderItemsObj( orderObj ) {
       items = orderObj.mainOrders[0].subOrders;
 
   $( items ).each( function() {
+    if ( isItemEmpty( this ) ) return;
     let item = {
       itemId: this.itemInfo.id,
-      options: this.itemInfo.skuText,
+      options: getOptsArr( this ),
       amount: this.quantity,
       price: this.priceInfo.realTotal,
       imgUrl: this.itemInfo.pic,
@@ -306,21 +293,6 @@ function getOrderPayDate( dataObj ) {
   if ( tmDates ) payDate = tmDates.options[1].time;
 
   return payDate;
-}
-
-function handleCapcha( url ) {
-  $.ajax({
-    url: url,
-    async: false,
-    success: data => {
-      let capchaUrl = JSON.parse( data ).url;
-      console.log( 'data', capchaUrl );
-
-      window.open( capchaUrl );
-
-      confirm( 'НАЖМИТЕ "ОК" ТОЛЬКО ПОСЛЕ ВВОДА КАПЧИ НА ОТКРЫВШЕЙСЯ ВКЛАДКЕ' );
-    }
-  });
 }
 
 

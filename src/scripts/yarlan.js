@@ -1,7 +1,9 @@
 'use strict';
 
-const tracksEP = 'http://ap.yarlan.ru/site/db/saver.php?action=getOrderForTrackImport&manager_login=',
-      statusesEP = 'http://ap.yarlan.ru/site/db/saver.php?action=getOrdersForStatusImport&manager_login=',
+const api = 'http://ap.yarlan.ru/site/db/saver.php',
+      tracksEP = `${api}?action=getOrdersForTrackImport&manager_login=`,
+      statusesEP = `${api}?action=getOrdersForStatusImport&manager_login=`,
+
       alerts = {
         done: {
           'getAllTracks': 'Трек номера импортированы! Нажмите "ОК"',
@@ -33,6 +35,9 @@ $( document ).ready( function() {
         break;
       case 'wrongOrderId':
         alert( 'Для магазина ' + msg.storeId + ' указан не правильный номер заказа Таобао: ' + msg.orderId + '. Исправьте номер заказа и попробуйте еще раз.' );
+        break;
+      case 'fromSaver':
+        alert( msg.text );
         break;
       default:
         alert( msg.error );
@@ -75,58 +80,58 @@ $( document ).ready( function() {
       createOnclickAction( trackButtons, 'getTrack' );
     }
   }, 250 );
-
-  function createOnclickAction( buttons, taskName ) {
-    $( buttons ).each( function( i ) {
-      $( this ).click( function() {
-        sendTask( this, taskName );
-      });
-    });
-  }
-
-  function createRequest( button, uri, taskName ) {
-    var manager = $( button ).attr( 'data-manager_login' ),
-        url = uri + manager,
-        msg = {
-          managerLogin: manager,
-          taskName: taskName,
-          from: 'yarlan'
-        };
-
-    $( button ).click( function() {
-      $.ajax({
-        url: url,
-        success: response => {
-          if( response.data.length ) {
-            msg.ordersIds = response.data;
-            port.postMessage( msg );
-          } else {
-            alert( 'Нечего импортировать' );
-          }
-        },
-        error: err => {
-          alert( `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}` );
-        }
-      });
-    });
-  }
-
-  function sendTask( button, taskName ) {
-    var maybeOrderId = $( button ).attr( 'data-taobao_order_id' ),
-        tbOrderId = maybeOrderId || prompt('Введите номер заказа Taobao').replace( /\s+/g, '' ),
-        msg = {
-          storeId: $( button ).attr( 'data-store_id' ),
-          managerLogin: $( button ).attr( 'data-manager_login' ),
-          taskName: taskName,
-          from: 'yarlan'
-        };
-
-    if ( !tbOrderId.match( /^\d{16,}$/g ) ) {
-      alert( 'Номер заказа Taobao введен не верно, попробуйте еще раз' );
-      return;
-    }
-
-    msg.taobaoOrderId = tbOrderId;
-    port.postMessage( msg );
-  }
 });
+
+function createOnclickAction( buttons, taskName ) {
+  $( buttons ).each( ( i, button )  => {
+    $( button ).click( function() {
+      sendTask( button, taskName );
+    });
+  });
+}
+
+function createRequest( button, uri, taskName ) {
+  var manager = $( button ).attr( 'data-manager_login' ),
+      url = uri + manager,
+      msg = {
+        managerLogin: manager,
+        taskName: taskName,
+        from: 'yarlan'
+      };
+
+  $( button ).click( function() {
+    $.ajax({
+      url: url,
+      success: response => {
+        if( response.data.length ) {
+          msg.ordersIds = response.data;
+          port.postMessage( msg );
+        } else {
+          alert( 'Нечего импортировать' );
+        }
+      },
+      error: err => {
+        alert( `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}` );
+      }
+    });
+  });
+}
+
+function sendTask( button, taskName ) {
+  var maybeOrderId = $( button ).attr( 'data-taobao_order_id' ),
+      tbOrderId = maybeOrderId || prompt('Введите номер заказа Taobao').replace( /\s+/g, '' ),
+      msg = {
+        storeId: $( button ).attr( 'data-store_id' ),
+        managerLogin: $( button ).attr( 'data-manager_login' ),
+        taskName: taskName,
+        from: 'yarlan'
+      };
+
+  if ( !tbOrderId.match( /^\d{16,}$/g ) ) {
+    alert( 'Номер заказа Taobao введен не верно, попробуйте еще раз' );
+    return;
+  }
+
+  msg.taobaoOrderId = tbOrderId;
+  port.postMessage( msg );
+}

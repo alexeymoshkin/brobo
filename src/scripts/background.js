@@ -5,6 +5,15 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/*",
     Port;
 
+(function() {
+  // reload all tabs work with
+  chrome.tabs.query( {url: [urlYrlRegx, urlTbRegx]}, function( tabs ) {
+    $( tabs ).each( ( i, tab ) => {
+      chrome.tabs.reload( tab.id );
+    });
+  });
+})()
+
 function cleanMsg( msg ){
   delete msg.orderData;
   delete msg.orderItemsData;
@@ -25,7 +34,7 @@ function takeSendDataApi( task, data, action ) {
       trackParam = task.track ? `&track=${task.track}` : '',
       deliveryParam = task.delivery ? `&delivery=${task.delivery}` : '',
       payDateParam = task.orderPayDate ? `&order_pay_date=${task.orderPayDate}` : '',
-      sendUrl =  `${apiUrl}?action=${action}&
+      sendUrl = `${apiUrl}?action=${action}&
 manager_login=${task.managerLogin}&
 order_id=${task.taobaoOrderId}&
 store_id=${task.storeId}
@@ -37,8 +46,7 @@ ${payDateParam}`;
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );
   xhr.setRequestHeader( "X-Requested-With", "XMLHttpRequest" );
-
-  xhr.send( JSON.stringify( data ));
+  xhr.send( JSON.stringify( data ) );
 
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
@@ -47,9 +55,23 @@ ${payDateParam}`;
       d.reject();
       return d;
     }
+
+    maybeHandleSaverErr( this.responseText );
     d.resolve();
   }
   return d;
+}
+
+function maybeHandleSaverErr( text ) {
+  if ( !text ) return;
+
+  let res = JSON.parse( text );
+  if ( res.result !== 0 ) return;
+
+  sendMsgYarlan({
+    error: 'fromSaver',
+    text: res.error
+  });
 }
 
 function checkManager( login ) {
