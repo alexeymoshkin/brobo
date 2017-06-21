@@ -30,6 +30,8 @@ $( document ).ready( function() {
       return;
     }
 
+    hideSpinner();
+
     if ( msg.error  ) {
       switch ( msg.error ) {
       case 'wrongManager':
@@ -46,7 +48,6 @@ $( document ).ready( function() {
         break;
       }
     } else {
-      hideSpinner();
       alert( alerts.done[msg.task.taskName] );
       if ( multiTask.includes( msg.task.taskName ) ) return;
       location.reload();

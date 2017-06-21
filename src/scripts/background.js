@@ -77,14 +77,19 @@ function maybeHandleSaverErr( text ) {
 function checkManager( login ) {
   var d = $.Deferred();
 
-  chrome.cookies.get( { url: 'https://www.taobao.com', name: '_nk_' }, function( obj ){
+  chrome.cookies.get( { url: 'https://www.taobao.com', name: '_nk_' }, obj => {
+    console.log( 'OBJECT', obj );
     if ( obj === null || obj.value !== login ) {
-      chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
+      chrome.tabs.query( {url: urlYrlRegx}, tabs => {
+
+        chrome.tabs.create( {url: 'https://login.taobao.com/', active: false} );
+
         chrome.tabs.sendMessage( tabs[0].id, {
           error: 'wrongManager',
           taskManager: login,
           taobaoManager: obj ? obj.value : null
         });
+
         d.reject();
       });
     } else {
