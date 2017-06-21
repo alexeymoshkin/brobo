@@ -8,10 +8,10 @@ var port,
       'getAllTracks': 'getAllTracks'
     };
 
-$( document ).ready( function() {
+$( document ).ready( () => {
   port = chrome.runtime.connect( {name: 'taobao'} );
 
-  chrome.runtime.onMessage.addListener( function( msg ) {
+  chrome.runtime.onMessage.addListener( msg => {
     switch ( msg.taskName ){
     case 'getOrderInfo':
       getSendOrderData( msg );
@@ -79,7 +79,7 @@ function getSendOrderData( task ) {
 
   xhr.send( data ); // data
 
-  xhr.onreadystatechange = function() {
+  xhr.onreadystatechange = () => {
     if ( this.readyState != 4 ) return;
 
     if ( this.status != 200 ) {
@@ -140,12 +140,13 @@ function getSendTrack( task ) {
       } else if ( task.taskName !== 'getAllTracks' ) {
         trackTaskMsg.error = 'Информация по треку не найдена';
       }
-      port.postMessage( trackTaskMsg );
     },
     error: err => {
       if ( task.taskName !== 'getAllTracks' ) {
         trackTaskMsg.error = `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}`;
       }
+    },
+    complete: () => {
       port.postMessage( trackTaskMsg );
     }
   });
@@ -155,10 +156,10 @@ function getOptsArr( item ) {
   let optsObj = item.itemInfo.skuText,
       optsArr = [];
 
-  if ( optsObj == {} ) return [];
+  if ( $.isEmptyObject( optsObj ) ) return [];
 
-  $( optsObj ).each( function(){
-    optsArr.push( `${this.name}: ${this.value}` );
+  $( optsObj ).each( opt => {
+    optsArr.push( `${opt.name}: ${opt.value}` );
   });
 
   return optsArr;

@@ -8,7 +8,7 @@ const api = 'http://ap.yarlan.ru/site/db/saver.php',
         done: {
           'getAllTracks': 'Трек номера импортированы! Нажмите "ОК"',
           'getAllStatuses': 'Taobao статусы для заказов импортированы! Нажмите "ОК"',
-          'getOrderInfo': 'Данные по заказу импортированы! Нажмите "ОК"',
+          'getOrderInfo': 'Товары заказа импортированы! Нажмите "ОК"',
           'getTrack': 'Трек номер для этого заказа импортирован! Нажмите "ОК"'
         }
       },
@@ -16,11 +16,11 @@ const api = 'http://ap.yarlan.ru/site/db/saver.php',
 
 var port;
 
-$( document ).ready( function() {
+$( document ).ready( () => {
   addSpinner();
   port = chrome.runtime.connect( {name: 'yarlan'} );
 
-  chrome.runtime.onMessage.addListener( function( msg ) {
+  chrome.runtime.onMessage.addListener( msg => {
 
     if ( msg.task && multiTask.includes( msg.task.taskName ) ) {
       if ( msg.task.done ) {
@@ -89,7 +89,7 @@ $( document ).ready( function() {
 
 function createOnclickAction( buttons, taskName ) {
   $( buttons ).each( ( i, button )  => {
-    $( button ).click( function() {
+    $( button ).click( () => {
       displaySpinner();
       sendTask( button, taskName );
     });
@@ -105,7 +105,7 @@ function createRequest( button, uri, taskName ) {
         from: 'yarlan'
       };
 
-  $( button ).click( function() {
+  $( button ).click( () => {
     displaySpinner();
     $.ajax({
       url: url,

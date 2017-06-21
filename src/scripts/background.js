@@ -5,8 +5,7 @@ var apiUrl = 'http://ap.yarlan.ru/site/db/saver.php',
     urlYrlRegx = "*://ap.yarlan.ru/*",
     Port;
 
-(function() {
-  // reload all tabs work with
+(function() {  // on plugin install reload all tabs work with
   chrome.tabs.query( {url: [urlYrlRegx, urlTbRegx]}, function( tabs ) {
     $( tabs ).each( ( i, tab ) => {
       chrome.tabs.reload( tab.id );
@@ -30,10 +29,12 @@ function sendMsgYarlan( msg ) {
 function takeSendDataApi( task, data, action ) {
   var xhr = new XMLHttpRequest(),
       d = $.Deferred(),
+
       statusParam = task.orderStatus ? `&order_status=${task.orderStatus}` : '',
       trackParam = task.track ? `&track=${task.track}` : '',
       deliveryParam = task.delivery ? `&delivery=${task.delivery}` : '',
       payDateParam = task.orderPayDate ? `&order_pay_date=${task.orderPayDate}` : '',
+
       sendUrl = `${apiUrl}?action=${action}&
 manager_login=${task.managerLogin}&
 order_id=${task.taobaoOrderId}&
@@ -63,7 +64,7 @@ ${payDateParam}`;
 }
 
 function maybeHandleSaverErr( text ) {
-  if ( !text ) return;
+  if ( text.length == 0 || text.length == 1 ) return;
 
   let res = JSON.parse( text );
   if ( res.result !== 0 ) return;
@@ -78,7 +79,6 @@ function checkManager( login ) {
   var d = $.Deferred();
 
   chrome.cookies.get( { url: 'https://www.taobao.com', name: '_nk_' }, obj => {
-    console.log( 'OBJECT', obj );
     if ( obj === null || obj.value !== login ) {
       chrome.tabs.query( {url: urlYrlRegx}, tabs => {
 
@@ -104,7 +104,7 @@ function maybeOpenTaobaoTab( msg ) {
   var d = $.Deferred(),
       url = "https://buyertrade.taobao.com/trade/itemlist/list_bought_items.htm";
 
-  chrome.tabs.query( {url: urlTbRegx}, function( tabs ){
+  chrome.tabs.query( {url: urlTbRegx}, tabs => {
     if ( !tabs.length ) {
       chrome.tabs.create( {url: url, active: false} );
       d.resolve();
@@ -123,8 +123,8 @@ function handleYarlanMsg( msg ) {
 
     delete msg.from;
 
-    let tabLoad = setInterval( function() {
-      chrome.tabs.query( {url: urlTbRegx}, function( tabs ) {
+    let tabLoad = setInterval( () => {
+      chrome.tabs.query( {url: urlTbRegx}, tabs => {
         if ( tabs[0].status === 'complete' ) {
           clearInterval( tabLoad );
           chrome.tabs.sendMessage( tabs[0].id, msg );
