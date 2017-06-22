@@ -79,7 +79,7 @@ function getSendOrderData( task ) {
 
   xhr.send( data ); // data
 
-  xhr.onreadystatechange = () => {
+  xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
 
     if ( this.status != 200 ) {
@@ -152,17 +152,17 @@ function getSendTrack( task ) {
   });
 }
 
-function getOptsArr( item ) {
+function getOptsStr( item ) {
   let optsObj = item.itemInfo.skuText,
-      optsArr = [];
+      optsStr = '';
 
-  if ( $.isEmptyObject( optsObj ) ) return [];
+  if ( $.isEmptyObject( optsObj ) ) return '';
 
-  $( optsObj ).each( opt => {
-    optsArr.push( `${opt.name}: ${opt.value}` );
+  $( optsObj ).each( (i, opt) => {
+    optsStr += `${opt.name}: ${opt.value}; `;
   });
 
-  return optsArr;
+  return optsStr;
 }
 
 function getDelivery( orderObj ) {
@@ -237,7 +237,7 @@ function createOrderItemsObj( orderObj ) {
     if ( isItemEmpty( this ) ) return;
     let item = {
       itemId: this.itemInfo.id,
-      options: getOptsArr( this ),
+      options: getOptsStr( this ),
       amount: this.quantity,
       price: this.priceInfo.realTotal,
       imgUrl: this.itemInfo.pic,
@@ -253,9 +253,8 @@ function getOrderPageData( orderId, getData ) {
   let orderData,
       handleTmallOrder = orderId => {
         $.ajax({
-          type: 'POST',
-          url: `trade.tmall.com/detail/orderDetail.htm?bizOrderId=${orderId}`,
-          async: true,
+          url: `https://trade.tmall.com/detail/orderDetail.htm?biz_order_id=${orderId}&forward_action=`,
+          async: false,
           success: page => {
             let data = page.match( /var detailData = (.+)/ )[1],
                 dataObj = JSON.parse( data );
@@ -278,6 +277,7 @@ function getOrderPageData( orderId, getData ) {
       orderData = getData( dataObj );
     },
     error: err => {
+      console.log( 'error', err );
       if ( err.readyState == 0 && err.status == 0 ) handleTmallOrder( orderId );
     }
   });
