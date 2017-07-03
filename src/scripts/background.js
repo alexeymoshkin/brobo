@@ -52,27 +52,30 @@ ${payDateParam}`;
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
 
-    if ( this.status != 200 ) {
+    if ( this.status != 200 ||
+         isSaverErrorsHandled( this.responseText ) ) {
+
       d.reject();
       return d;
     }
 
-    maybeHandleSaverErr( this.responseText );
     d.resolve();
   }
   return d;
 }
 
-function maybeHandleSaverErr( text ) {
-  if ( text.length == 0 || text.length == 1 ) return;
+function isSaverErrorsHandled( text ) {
+  if ( text.length == 0 || text.length == 1 ) return false;
 
   let res = JSON.parse( text );
-  if ( res.result !== 0 ) return;
+  if ( res.result !== 0 ) return false;
 
   sendMsgYarlan({
     error: 'fromSaver',
     text: res.error
   });
+
+  return true;
 }
 
 function checkManager( login ) {
