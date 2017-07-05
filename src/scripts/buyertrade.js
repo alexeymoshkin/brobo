@@ -30,9 +30,6 @@ $( document ).ready( () => {
       break;
     }
   });
-
-  // testRequest();
-  // getOrderPage();
 });
 
 function handleGetAllSmth( msg, getOneSmth ) {
@@ -43,7 +40,8 @@ function handleGetAllSmth( msg, getOneSmth ) {
         storeId: that.store_id,
         managerLogin: msg.managerLogin,
         taskName: msg.taskName,
-        taobaoOrderId: that.taobao_order_id
+        taobaoOrderId: that.taobao_order_id,
+        tabId: msg.tabId
       };
 
       var t = setTimeout( () => {
@@ -125,6 +123,7 @@ function getSendTrack( task ) {
         storeId: task.storeId,
         managerLogin: task.managerLogin,
         taskName: trackTaskName[task.taskName],
+        tabId: task.tabId,
         done: task.done
       },
       trackTaskMsg = {
@@ -142,9 +141,9 @@ function getSendTrack( task ) {
       }
     },
     error: err => {
-      if ( task.taskName !== 'getAllTracks' ) {
-        trackTaskMsg.error = `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}`;
-      }
+      // if ( task.taskName !== 'getAllTracks' ) {
+      //   trackTaskMsg.error = `Ответ сервера: ${err.status}, текст ошибки: ${err.statusText}`;
+      // }
     },
     complete: () => {
       port.postMessage( trackTaskMsg );
@@ -200,6 +199,7 @@ function sendMessageToBg( data, task ) {
     storeId: task.storeId,
     managerLogin: task.managerLogin,
     taskName: task.taskName,
+    tabId: task.tabId,
     done: task.done
   },
       orderTaskMsg = {
@@ -260,9 +260,6 @@ function getOrderPageData( orderId, getData ) {
                 dataObj = JSON.parse( data );
 
             orderData = getData( dataObj );
-          },
-          error: err => {
-            console.log( 'ERRROR', err );
           }
         });
       };
@@ -277,7 +274,6 @@ function getOrderPageData( orderId, getData ) {
       orderData = getData( dataObj );
     },
     error: err => {
-      console.log( 'error', err );
       if ( err.readyState == 0 && err.status == 0 ) handleTmallOrder( orderId );
     }
   });
@@ -294,80 +290,4 @@ function getOrderPayDate( dataObj ) {
   if ( tmDates ) payDate = tmDates.options[1].time;
 
   return payDate;
-}
-
-
-//////////////////////// TEST ////////////////////////
-
-function testRequest() {
-  var task1 = {
-    taobaoOrderId: '3254842308974967',
-    storeId: '62',
-    managerLogin: 'krasrab5',
-    taskName: 'getOrderInfo'
-  },
-      taskCancelled = {
-        taobaoOrderId: '20120511558696895',
-        storeId: '62',
-        managerLogin: 'krasrab',
-        taskName: 'getOrderInfo'
-      },
-      task2 = {
-        taobaoOrderId: '20829391945696895',
-        storeId: '62',
-        managerLogin: 'krasrab',
-        taskName: 'getOrderInfo'
-      },
-      taskTrack1 = {
-        taobaoOrderId: '11508210996654967',
-        storeId: '53',
-        managerLogin: 'krasrab5',
-        taskName: 'getTrack'
-      },
-      taskTrack2 = {
-        taobaoOrderId: '17348469773696895',
-        storeId: '13',
-        managerLogin: 'krasrab',
-        taskName: 'getTrack'
-      },
-      taskTrackUndef = {
-        taobaoOrderId: '15546229474696895',
-        storeId: '51',
-        managerLogin: 'krasrab',
-        taskName: 'getTrack'
-      };
-  var getTracksMsg = {
-    managerLogin: 'krasrab',
-    taskName: 'getAllTracks',
-    ordersIds: [
-      {
-        manager: "krasrab",
-        store_id: "33",
-        taobao_order_id: "14525968699696895"
-      },
-      {
-        manager: "krasrab",
-        store_id: "34",
-        taobao_order_id: "20951271040696895"
-      },
-      {
-        manager: "krasrab",
-        store_id: "35",
-        taobao_order_id: "20829391945696895"
-      },
-      {
-        manager: "krasrab",
-        store_id: "31",
-        taobao_order_id: "18344711109696895"
-      },
-      {
-        manager: "krasrab",
-        store_id: "37",
-        taobao_order_id: "17973749221696895"
-      }
-    ]
-  };
-
-  // getSendTrack( taskTrack2 );
-  getSendOrderData( taskCancelled );
 }

@@ -20,9 +20,15 @@ function cleanMsg( msg ){
   return msg;
 }
 
-function sendMsgYarlan( msg ) {
-  chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
-    chrome.tabs.sendMessage( tabs[0].id, msg );
+function sendMsgYarlan( msg, tabId ) {
+  chrome.tabs.get( tabId, () => {
+    if ( chrome.runtime.lastError ) {
+      chrome.tabs.query( {url: urlYrlRegx}, function( tabs ) {
+        chrome.tabs.sendMessage( tabs[0].id, msg );
+      });
+    } else {
+      chrome.tabs.sendMessage( tabId, msg );
+    }
   });
 }
 
@@ -51,9 +57,8 @@ ${payDateParam}`;
 
   xhr.onreadystatechange = function() {
     if ( this.readyState != 4 ) return;
-
     if ( this.status != 200 ||
-         isSaverErrorsHandled( this.responseText ) ) {
+         isSaverErrorsHandled( this.responseText, task.tabId ) ) {
 
       d.reject();
       return d;
@@ -64,7 +69,7 @@ ${payDateParam}`;
   return d;
 }
 
-function isSaverErrorsHandled( text ) {
+function isSaverErrorsHandled( text, tabId ) {
   if ( text.length == 0 || text.length == 1 ) return false;
 
   let res = JSON.parse( text );
@@ -73,12 +78,12 @@ function isSaverErrorsHandled( text ) {
   sendMsgYarlan({
     error: 'fromSaver',
     text: res.error
-  });
+  }, tabId);
 
   return true;
 }
 
-function checkManager( login ) {
+function checkManager( login, tabId ) {
   var d = $.Deferred();
 
   chrome.cookies.get( { url: 'https://www.taobao.com', name: '_nk_' }, obj => {
@@ -87,7 +92,7 @@ function checkManager( login ) {
 
         chrome.tabs.create( {url: 'https://login.taobao.com/', active: false} );
 
-        chrome.tabs.sendMessage( tabs[0].id, {
+        chrome.tabs.sendMessage( tabId, {
           error: 'wrongManager',
           taskManager: login,
           taobaoManager: obj ? obj.value : null
@@ -120,7 +125,7 @@ function maybeOpenTaobaoTab( msg ) {
 
 function handleYarlanMsg( msg ) {
   $.when(
-    checkManager( msg.managerLogin )
+    checkManager( msg.managerLogin, msg.tabId )
   ).done( function() {
     maybeOpenTaobaoTab( msg );
 
@@ -140,7 +145,7 @@ function handleYarlanMsg( msg ) {
 function handleTaobaoMsg( msg ) {
   if ( msg.error ) {
     msg = cleanMsg( msg );
-    sendMsgYarlan( msg );
+    sendMsgYarlan( msg, msg.task.tabId );
     return;
   }
 
@@ -152,10 +157,11 @@ function handleTaobaoMsg( msg ) {
 
   }).fail( () => {
     msg.error = 'Не удалось отправить данные на сервер';
-    sendMsgYarlan( msg );
+    sendMsgYarlan( msg, msg.task.tabId );
 
   }).then( () => {
-    sendMsgYarlan( msg );
+    sendMsgYarlan( msg, msg.task.tabId );
+
   });
 }
 
@@ -188,9 +194,10 @@ function handleMsgTask( msg ){
 chrome.runtime.onConnect.addListener( port => {
   Port = port;
 
-  port.onMessage.addListener( msg => {
+  port.onMessage.addListener( (msg, port) => {
     switch( msg.from ) {
     case 'yarlan':
+      msg['tabId'] = port.sender.tab.id;
       handleYarlanMsg( msg );
       break;
 
