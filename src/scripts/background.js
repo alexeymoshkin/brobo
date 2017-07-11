@@ -42,13 +42,13 @@ function takeSendDataApi( task, data, action ) {
       payDateParam = task.orderPayDate ? `&order_pay_date=${task.orderPayDate}` : '',
 
       sendUrl = `${apiUrl}?action=${action}&
-manager_login=${task.managerLogin}&
-order_id=${task.taobaoOrderId}&
-store_id=${task.storeId}
-${trackParam}
-${deliveryParam}
-${statusParam}
-${payDateParam}`;
+                 manager_login=${task.managerLogin}&
+                 order_id=${task.taobaoOrderId}&
+                 store_id=${task.storeId}
+                 ${trackParam}
+                 ${deliveryParam}
+                 ${statusParam}
+                 ${payDateParam}`;
 
   xhr.open( 'POST', sendUrl, true );
   xhr.setRequestHeader( "Accept", "text/json" );
@@ -168,8 +168,10 @@ function handleTaobaoMsg( msg ) {
 function handleMsgTask( msg ){
   switch( msg.task.taskName ) {
   case 'getOrderInfo':
-    let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' ),
-        d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
+    let d1 = takeSendDataApi( msg.task, msg.orderData, 'sendOrderData' );
+    delete msg.task.orderStatus;
+    let d2 = takeSendDataApi( msg.task, msg.orderItemsData, 'sendOrderItemsData' );
+
     return d1, d2;
 
   case 'getTrack':
